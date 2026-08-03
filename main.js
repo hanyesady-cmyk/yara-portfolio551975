@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 6. Render Comments Dynamically
+    // 6. Render Comments Dynamically & Safely Support Old/New Replies
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
@@ -136,12 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     repliesHTML = '<div class="replies-container">';
                     data.replies.forEach((reply, rIndex) => {
                         const replyLikes = reply.likes || 0;
-                        const isReplyOwner = (reply.deviceId === deviceId);
+                        // الرد القديم اللي ملوش deviceId بيكون متاح تعديله/حذفه أو حسب الرغبة، والجديد بمستوى أمان جهازه
+                        const isReplyOwner = reply.deviceId ? (reply.deviceId === deviceId) : false;
                         
                         repliesHTML += `
                             <div class="reply-card" data-reply-index="${rIndex}">
                                 <div class="reply-header">
-                                    <span><b>${escapeHTML(reply.name)}</b></span>
+                                    <span><b>${escapeHTML(reply.name || "User")}</b></span>
                                     <span style="display: flex; gap: 8px; align-items: center;">
                                         ${reply.date || ""}
                                         ${isReplyOwner ? `
@@ -150,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ` : ''}
                                     </span>
                                 </div>
-                                <div class="reply-text" id="reply-text-${id}-${rIndex}">${escapeHTML(reply.message)}</div>
+                                <div class="reply-text" id="reply-text-${id}-${rIndex}">${escapeHTML(reply.message || "")}</div>
                                 <div class="comment-actions">
                                     <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}">
                                         ❤️ <span>${replyLikes}</span>
@@ -167,9 +168,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.innerHTML = `
                     <div class="comment-header">
                         <div class="comment-user-info">
-                            <div class="avatar">${data.name.charAt(0).toUpperCase()}</div>
+                            <div class="avatar">${(data.name || "U").charAt(0).toUpperCase()}</div>
                             <div class="comment-info">
-                                <h3>${escapeHTML(data.name)}</h3>
+                                <h3>${escapeHTML(data.name || "Anonymous")}</h3>
                                 <span class="comment-date">${dateStr}</span>
                             </div>
                         </div>
@@ -180,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             ` : ''}
                         </div>
                     </div>
-                    <p class="comment-text" id="comment-text-${id}">${escapeHTML(data.message)}</p>
+                    <p class="comment-text" id="comment-text-${id}">${escapeHTML(data.message || "")}</p>
                     
                     <div class="comment-actions" style="justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px;">
                         <button class="action-btn comment-like-btn" data-id="${id}">
@@ -285,7 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Delete Reply (Only Owner)
+        // Delete Reply
         const deleteReplyBtn = e.target.closest('.delete-reply-btn');
         if (deleteReplyBtn) {
             const commentId = deleteReplyBtn.dataset.commentId;
@@ -301,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Edit Reply (Only Owner)
+        // Edit Reply
         const editReplyBtn = e.target.closest('.edit-reply-btn');
         if (editReplyBtn) {
             const commentId = editReplyBtn.dataset.commentId;
