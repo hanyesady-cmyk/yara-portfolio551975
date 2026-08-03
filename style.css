@@ -59,7 +59,6 @@ nav{
 .logo{
     font-size: 24px;
     font-weight: 800;
-    letter-spacing: -0.5px;
     color: var(--text-main);
 }
 
@@ -69,6 +68,12 @@ nav{
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 nav ul{
@@ -187,7 +192,7 @@ nav ul li a:hover, nav ul li a.active{
     box-shadow: 0 15px 35px rgba(139, 92, 246, 0.2);
 }
 
-/* SECTIONS DESIGN & ANIMATION */
+/* SECTION TITLES */
 .section-title{
     font-size: 34px;
     font-weight: 800;
@@ -198,12 +203,6 @@ nav ul li a:hover, nav ul li a.active{
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: gradientShift 6s ease infinite;
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 .section-desc{
@@ -238,11 +237,13 @@ nav ul li a:hover, nav ul li a.active{
 .skill-card h3{ font-size: 18px; margin-bottom: 10px; color: var(--text-main); }
 .skill-card p{ font-size: 14px; color: var(--text-muted); line-height: 1.6; }
 
-/* PROJECTS SECTION (تم ضبط الكروت والفيديوهات بدقة تامة لتجنب أي مشاكل عرض) */
+/* PROJECTS SECTION (منع التداخل وتثبيت المقاسات تماماً) */
 .projects-container{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
+    align-items: stretch;
+    width: 100%;
 }
 
 .project-card{
@@ -263,7 +264,7 @@ nav ul li a:hover, nav ul li a.active{
 
 .project-image-container {
     width: 100%;
-    height: 220px;
+    height: 200px;
     overflow: hidden;
     position: relative;
     background: #000;
@@ -275,34 +276,21 @@ nav ul li a:hover, nav ul li a.active{
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: 0.4s ease;
-}
-
-.project-card:hover .project-image-container img {
-    transform: scale(1.05);
 }
 
 .project-content {
-    padding: 22px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     flex-grow: 1;
 }
 
-.project-card h3{ 
-    font-size: 18px; 
-    color: var(--text-main);
-}
-
-.project-card p{ 
-    font-size: 14px; 
-    color: var(--text-muted); 
-    line-height: 1.5;
-}
+.project-card h3{ font-size: 18px; color: var(--text-main); }
+.project-card p{ font-size: 14px; color: var(--text-muted); line-height: 1.5; }
 
 .project-footer {
-    padding: 15px 22px;
+    padding: 12px 20px;
     border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -332,7 +320,7 @@ nav ul li a:hover, nav ul li a.active{
 
 .project-like i { color: #ef4444; }
 
-/* COMMENTS SYSTEM & REPLIES */
+/* COMMENTS & REPLIES SYSTEM */
 .comment-form {
     max-width: 650px;
     margin: 0 auto 40px;
@@ -353,32 +341,23 @@ nav ul li a:hover, nav ul li a.active{
     color: var(--text-main);
     outline: none;
     font-size: 14px;
-    transition: 0.3s;
 }
 
-.comment-form input:focus, .comment-form textarea:focus{
-    border-color: var(--purple);
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
-}
-
-.comment-form textarea{ height: 110px; resize: none; }
+.comment-form textarea{ height: 100px; resize: none; }
 
 .btn-submit {
     align-self: flex-start;
-    padding: 12px 30px;
+    padding: 10px 25px;
     background: var(--purple);
     color: var(--text-main);
     border: none;
-    border-radius: 25px;
+    border-radius: 20px;
     cursor: pointer;
     font-weight: 600;
     transition: 0.3s;
 }
 
-.btn-submit:hover {
-    background: transparent;
-    border: 2px solid var(--purple);
-}
+.btn-submit:hover { opacity: 0.9; }
 
 .comments-container {
     max-width: 650px;
@@ -390,17 +369,16 @@ nav ul li a:hover, nav ul li a.active{
 
 .comment-card {
     background: var(--card-bg);
-    padding: 22px;
+    padding: 20px;
     border-radius: 14px;
     border: 1px solid var(--border-color);
-    transition: 0.3s;
 }
 
 .comment-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .comment-user-info {
@@ -410,8 +388,8 @@ nav ul li a:hover, nav ul li a.active{
 }
 
 .avatar {
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     background: linear-gradient(135deg, var(--purple), var(--blue));
     border-radius: 50%;
     display: flex;
@@ -419,16 +397,16 @@ nav ul li a:hover, nav ul li a.active{
     align-items: center;
     font-weight: 700;
     color: var(--text-main);
-    font-size: 16px;
+    font-size: 15px;
 }
 
-.comment-info h3 { font-size: 16px; color: var(--text-main); }
-.comment-date { font-size: 12px; color: var(--text-muted); }
-.comment-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;}
+.comment-info h3 { font-size: 15px; color: var(--text-main); }
+.comment-date { font-size: 11px; color: var(--text-muted); }
+.comment-text { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
 
 .comment-actions {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     align-items: center;
 }
 
@@ -436,41 +414,37 @@ nav ul li a:hover, nav ul li a.active{
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    transition: 0.3s;
 }
 
 .edit-btn { color: var(--cyan); }
 .delete-btn { color: #ef4444; }
 .reply-btn { color: var(--blue); }
 
-.edit-btn:hover, .delete-btn:hover, .reply-btn:hover { text-decoration: underline; }
-
-/* REPLIES CONTAINER */
 .replies-container {
-    margin-top: 15px;
-    margin-right: 30px;
-    padding-right: 15px;
+    margin-top: 12px;
+    margin-right: 20px;
+    padding-right: 12px;
     border-right: 2px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .reply-card {
     background: rgba(11, 15, 25, 0.6);
-    padding: 12px 15px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
 }
 
 .reply-header {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-muted);
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .reply-text {
@@ -478,7 +452,7 @@ nav ul li a:hover, nav ul li a.active{
     color: var(--text-main);
 }
 
-/* CONTACT SECTION DESIGN (تعديل صفحة الكونتاكت بالكامل لتكون شيك ونظيفة) */
+/* CONTACT SECTION */
 .contact-container {
     max-width: 650px;
     margin: 0 auto;
@@ -486,7 +460,6 @@ nav ul li a:hover, nav ul li a.active{
     padding: 40px;
     border-radius: 20px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 .contact-form {
@@ -516,20 +489,10 @@ nav ul li a:hover, nav ul li a.active{
     color: var(--text-main);
     outline: none;
     font-size: 14px;
-    transition: 0.3s;
 }
 
-.contact-form input:focus, .contact-form textarea:focus {
-    border-color: var(--cyan);
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
-}
+.contact-form textarea { height: 140px; resize: none; }
 
-.contact-form textarea {
-    height: 140px;
-    resize: none;
-}
-
-/* RESPONSIVE */
 @media(max-width: 768px){
     #menuBtn{ display: block; }
     nav ul{
@@ -545,23 +508,7 @@ nav ul li a:hover, nav ul li a.active{
         transition: 0.5s;
         border-bottom: 1px solid var(--border-color);
     }
-    nav ul.active{
-        clip-path: circle(100% at 50% 50%);
-    }
+    nav ul.active{ clip-path: circle(100% at 50% 50%); }
     .right-nav button{ display: none; }
-
-    .hero{
-        display: flex;
-        flex-direction: column;
-        text-align: center;
-        padding-top: 120px;
-    }
-
-    .content { order: 1; }
-    .image { order: 2; margin-bottom: 30px; }
-    
-    .content h1{ font-size: 36px; }
-    .buttons{ justify-content: center; }
-    .image img{ max-width: 280px; }
-    .contact-container { padding: 20px; }
+    .hero{ flex-direction: column; text-align: center; }
 }
