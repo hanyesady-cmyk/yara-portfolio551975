@@ -79,57 +79,66 @@ window.closeVideo = function() {
     }
 };
 
-// Project Likes Handling (Hybrid: LocalStorage for instant persistence + Firebase background sync)
+// Project Likes Handling (Real-time Firebase sync for all users + LocalStorage anti-spam)
 const projectLikes = document.querySelectorAll('.project-like');
 projectLikes.forEach((button, index) => {
-    const projectId = button.getAttribute('data-id') || `project_${index}`;
+    const projectId = button.getAttribute('data-id') || `project_${index + 1}`;
     const likesSpan = button.querySelector('.project-likes');
     
     if (!likesSpan) return;
 
-    // 1. استرجاع العدد والحالة من التخزين المحلي فوراً عشان يثبت وما يختفيش مع الـ Refresh
-    const savedLikes = localStorage.getItem(`portfolio_likes_${projectId}`);
-    const isLiked = localStorage.getItem(`portfolio_liked_${projectId}`);
+    const projectRef = doc(db, "projects_likes", projectId);
 
-    if (savedLikes !== null) {
-        likesSpan.textContent = savedLikes;
-    }
-    
-    if (isLiked === 'true') {
+    // 1. جلب العدد الحقيقي الموحد لكل الزوار لحظياً من Firebase
+    onSnapshot(projectRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            likesSpan.textContent = data.likes || 0;
+        } else {
+            likesSpan.textContent = 0;
+        }
+    }, (error) => {
+        console.error("Error fetching likes: ", error);
+    });
+
+    // 2. التحقق مما إذا كان المستخدم الحالي قد قام بالاعجاب من قبل
+    const hasLiked = localStorage.getItem(`liked_${projectId}`);
+    if (hasLiked === 'true') {
         button.classList.add('liked');
     }
 
-    // 2. إدارة الضغط على اللايك ومنع التكرار العشوائي
+    // 3. التعامل مع الضغط على زر الإعجاب
     button.addEventListener('click', async () => {
-        let currentLikes = parseInt(likesSpan.textContent) || 0;
-
-        if (!button.classList.contains('liked')) {
-            currentLikes++;
-            button.classList.add('liked');
-            localStorage.setItem(`portfolio_liked_${projectId}`, 'true');
-        } else {
-            currentLikes = Math.max(0, currentLikes - 1);
-            button.classList.remove('liked');
-            localStorage.removeItem(`portfolio_liked_${projectId}`);
-        }
-
-        // تحديث فورى على الشاشة وفي التخزين المحلي
-        likesSpan.textContent = currentLikes;
-        localStorage.setItem(`portfolio_likes_${projectId}`, currentLikes);
-
-        // محاولة التحديث في الـ Firebase في الخلفية
         try {
-            const projectRef = doc(db, "projects_likes", projectId);
             const snap = await getDoc(projectRef);
+            let currentLikes = 0;
             if (snap.exists()) {
-                await updateDoc(projectRef, { likes: currentLikes });
+                currentLikes = snap.data().likes || 0;
+            }
+
+            let newLikes;
+            if (!button.classList.contains('liked')) {
+                // إضافة لايك جديد
+                newLikes = currentLikes + 1;
+                button.classList.add('liked');
+                localStorage.setItem(`liked_${projectId}`, 'true');
+            } else {
+                // إلغاء اللايك إذا ضغط مرة أخرى
+                newLikes = Math.max(0, currentLikes - 1);
+                button.classList.remove('liked');
+                localStorage.removeItem(`liked_${projectId}`);
+            }
+
+            // تحديث العدد في الـ Firebase لكي يراه الجميع
+            if (snap.exists()) {
+                await updateDoc(projectRef, { likes: newLikes });
             } else {
                 import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async ({ setDoc }) => {
-                    await setDoc(projectRef, { likes: currentLikes });
+                    await setDoc(projectRef, { likes: newLikes });
                 });
             }
-        } catch (e) {
-            console.log("Firebase background sync note: saved locally.");
+        } catch (error) {
+            console.error("Error updating like: ", error);
         }
     });
 });
