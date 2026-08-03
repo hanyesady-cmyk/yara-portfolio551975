@@ -73,10 +73,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ==========================================
-    // 3. COMMENTS SYSTEM (Firebase + Edit/Delete for same device)
+    // 3. PROJECT LIKES & FIREBASE SYNC
     // ==========================================
-    
-    // معرف الجهاز للتحقق من ملكية التعليق
+    async function initializeProjects() {
+        document.querySelectorAll(".project-like").forEach(async (button) => {
+            const id = button.dataset.id;
+            if(!id) return;
+            const ref = doc(db, "projects", id);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+                await setDoc(ref, { likes: 0 });
+            }
+        });
+    }
+    initializeProjects();
+
+    onSnapshot(collection(db, "projects"), (snapshot) => {
+        snapshot.forEach(project => {
+            const data = project.data();
+            const likeSpan = document.querySelector(`[data-id="${project.id}"] .project-likes`);
+            if (likeSpan) {
+                likeSpan.textContent = data.likes || 0;
+            }
+        });
+    });
+
+    document.querySelectorAll(".project-like").forEach(button => {
+        button.addEventListener("click", async () => {
+            const id = button.dataset.id;
+            const storageKey = "liked_" + id;
+            if (localStorage.getItem(storageKey)) {
+                alert("You already liked this project ❤️");
+                return;
+            }
+            await updateDoc(doc(db, "projects", id), { likes: increment(1) });
+            localStorage.setItem(storageKey, "true");
+        });
+    });
+
+    // ==========================================
+    // 4. COMMENTS SYSTEM (Firebase + Edit/Delete Same Device)
+    // ==========================================
     let deviceId = localStorage.getItem('portfolio_device_id');
     if (!deviceId) {
         deviceId = 'dev_' + Math.random().toString(36).substring(2, 15);
@@ -110,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // جلب وعرض التعليقات لحظياً من Firestore
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
@@ -152,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 4. GLOBAL FUNCTIONS FOR EDIT & DELETE
+// 5. GLOBAL FUNCTIONS FOR EDIT & DELETE
 // ==========================================
 window.deleteComment = async function(commentId, commentDeviceId) {
     let currentDeviceId = localStorage.getItem('portfolio_device_id');
