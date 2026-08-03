@@ -5,6 +5,8 @@ import {
     collection, 
     addDoc, 
     doc, 
+    getDoc,
+    setDoc,
     updateDoc, 
     deleteDoc, 
     onSnapshot, 
@@ -96,46 +98,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 4. Original Project Likes (Local Storage) ---
+    // --- 4. Project Likes from Firebase (Global for all users) ---
     document.querySelectorAll(".project-card").forEach((card, index) => {
+        const projectId = `project_${index + 1}`;
         const likeBtn = card.querySelector(".project-like");
         if (!likeBtn) return;
 
         const span = likeBtn.querySelector("span");
         const icon = likeBtn.querySelector("i");
-        const storageKey = `project_likes_${index}`;
-        const likedKey = `project_liked_${index}`;
+        const projectRef = doc(db, "projects_likes", projectId);
 
-        // Load saved likes from localStorage
-        const savedLikes = localStorage.getItem(storageKey);
-        const isLiked = localStorage.getItem(likedKey) === "true";
-
-        if (savedLikes !== null) {
-            span.textContent = `${savedLikes} Likes`;
-        }
-        
-        if (isLiked) {
-            likeBtn.classList.add("liked");
-            if (icon) icon.className = "fa-solid fa-heart";
-        }
-
-        likeBtn.addEventListener("click", () => {
-            let currentLikes = parseInt(span.textContent) || 0;
-            
-            if (likeBtn.classList.contains("liked")) {
-                likeBtn.classList.remove("liked");
-                if (icon) icon.className = "fa-regular fa-heart";
-                currentLikes = Math.max(0, currentLikes - 1);
-                localStorage.setItem(likedKey, "false");
-            } else {
-                likeBtn.classList.add("liked");
-                if (icon) icon.className = "fa-solid fa-heart";
-                currentLikes += 1;
-                localStorage.setItem(likedKey, "true");
+        // Fetch initial likes from Firebase
+        getDoc(projectRef).then((docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                span.textContent = `${data.likes || 0} Likes`;
             }
+        }).catch(err => console.error(err));
 
-            span.textContent = `${currentLikes} Likes`;
-            localStorage.setItem(storageKey, currentLikes);
+        likeBtn.addEventListener("click", async () => {
+            const isLiked = likeBtn.classList.toggle("liked");
+            let currentLikes = parseInt(span.textContent) || 0;
+            let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+            
+            span.textContent = `${newLikes} Likes`;
+            icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+
+            try {
+                await setDoc(projectRef, { likes: newLikes }, { merge: true });
+            } catch (err) {
+                console.error("Error updating project like:", err);
+            }
         });
     });
 
