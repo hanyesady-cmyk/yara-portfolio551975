@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = commentDoc.data();
                 const id = commentDoc.id;
                 const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
-                const isOwner = (data.deviceId === deviceId);
+                const isCommentOwner = (data.deviceId === deviceId);
                 const commentLikes = data.likes || 0;
 
                 let repliesHTML = '';
@@ -136,13 +136,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     repliesHTML = '<div class="replies-container">';
                     data.replies.forEach((reply, rIndex) => {
                         const replyLikes = reply.likes || 0;
+                        const isReplyOwner = (reply.deviceId === deviceId);
+                        
                         repliesHTML += `
-                            <div class="reply-card">
+                            <div class="reply-card" data-reply-index="${rIndex}">
                                 <div class="reply-header">
                                     <span><b>${escapeHTML(reply.name)}</b></span>
-                                    <span>${reply.date || ""}</span>
+                                    <span style="display: flex; gap: 8px; align-items: center;">
+                                        ${reply.date || ""}
+                                        ${isReplyOwner ? `
+                                            <button class="edit-reply-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-size:11px; font-weight:600;">Edit</button>
+                                            <button class="delete-reply-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:11px; font-weight:600;">Delete</button>
+                                        ` : ''}
+                                    </span>
                                 </div>
-                                <div class="reply-text">${escapeHTML(reply.message)}</div>
+                                <div class="reply-text" id="reply-text-${id}-${rIndex}">${escapeHTML(reply.message)}</div>
                                 <div class="comment-actions">
                                     <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}">
                                         ❤️ <span>${replyLikes}</span>
@@ -166,19 +174,23 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <div class="comment-actions">
-                            <button class="reply-btn" data-id="${id}">Reply</button>
-                            ${isOwner ? `
+                            ${isCommentOwner ? `
                                 <button class="edit-btn" data-id="${id}">Edit</button>
                                 <button class="delete-btn" data-id="${id}">Delete</button>
                             ` : ''}
                         </div>
                     </div>
-                    <p class="comment-text">${escapeHTML(data.message)}</p>
-                    <div class="comment-actions">
+                    <p class="comment-text" id="comment-text-${id}">${escapeHTML(data.message)}</p>
+                    
+                    <div class="comment-actions" style="justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px;">
                         <button class="action-btn comment-like-btn" data-id="${id}">
                             ❤️ <span>${commentLikes}</span>
                         </button>
+                        <button class="reply-btn" data-id="${id}" style="background: none; border: none; color: var(--blue); cursor: pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            ↩ Reply
+                        </button>
                     </div>
+                    
                     <div id="reply-box-${id}"></div>
                     ${repliesHTML}
                 `;
@@ -238,7 +250,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = snap.data();
                 let replies = data.replies || [];
                 if (replies[rIndex]) {
-                    // Check if already liked reply by this device
                     const rLikedBy = replies[rIndex].likedBy || [];
                     if (rLikedBy.includes(deviceId)) {
                         alert("You already liked this reply ❤️");
@@ -262,13 +273,50 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Edit Comment
+        // Edit Comment (Inline or Prompt-less Style / Clean Prompt)
         const editBtn = e.target.closest('.edit-btn');
         if (editBtn) {
             const commentId = editBtn.dataset.id;
-            let newText = prompt("عدل تعليقك:");
+            const textEl = document.getElementById(`comment-text-${commentId}`);
+            const currentText = textEl ? textEl.textContent : "";
+            let newText = prompt("عدل تعليقك:", currentText);
             if (newText !== null && newText.trim() !== "") {
                 try { await updateDoc(doc(db, "comments", commentId), { message: newText.trim() }); } catch (err) { console.error(err); }
+            }
+        }
+
+        // Delete Reply (Only Owner)
+        const deleteReplyBtn = e.target.closest('.delete-reply-btn');
+        if (deleteReplyBtn) {
+            const commentId = deleteReplyBtn.dataset.commentId;
+            const rIndex = parseInt(deleteReplyBtn.dataset.replyIndex);
+            if (confirm("متأكد إنك عايز تحذف الرد ده؟")) {
+                const ref = doc(db, "comments", commentId);
+                const snap = await getDoc(ref);
+                if (snap.exists()) {
+                    let replies = snap.data().replies || [];
+                    replies.splice(rIndex, 1);
+                    try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
+                }
+            }
+        }
+
+        // Edit Reply (Only Owner)
+        const editReplyBtn = e.target.closest('.edit-reply-btn');
+        if (editReplyBtn) {
+            const commentId = editReplyBtn.dataset.commentId;
+            const rIndex = parseInt(editReplyBtn.dataset.replyIndex);
+            const ref = doc(db, "comments", commentId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                let replies = snap.data().replies || [];
+                if (replies[rIndex]) {
+                    let newMsg = prompt("عدل الرد:", replies[rIndex].message);
+                    if (newMsg !== null && newMsg.trim() !== "") {
+                        replies[rIndex].message = newMsg.trim();
+                        try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
+                    }
+                }
             }
         }
 
@@ -278,22 +326,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const commentId = replyBtn.dataset.id;
             const boxContainer = document.getElementById(`reply-box-${commentId}`);
             
-            // If already open, close it
             if (boxContainer.innerHTML.trim() !== "") {
                 boxContainer.innerHTML = "";
                 return;
             }
 
-            // Close any other open reply boxes
             document.querySelectorAll('[id^="reply-box-"]').forEach(el => el.innerHTML = "");
 
             boxContainer.innerHTML = `
-                <div class="inline-reply-box">
-                    <input type="text" id="replyName_${commentId}" placeholder="Your Name" required>
-                    <textarea id="replyMsg_${commentId}" placeholder="Write a reply..." required></textarea>
-                    <div class="reply-form-btns">
-                        <button type="button" class="cancel-reply-btn" data-id="${commentId}">Cancel</button>
-                        <button type="button" class="submit-reply-btn" data-id="${commentId}">Reply</button>
+                <div class="inline-reply-box" style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="replyName_${commentId}" placeholder="اسمك" required style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none;">
+                    <textarea id="replyMsg_${commentId}" placeholder="اكتب ردك..." required style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; height: 55px; resize: none; outline: none;"></textarea>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                        <button type="button" class="cancel-reply-btn" data-id="${commentId}" style="padding: 5px 12px; border-radius: 12px; font-size: 11px; background: #e2e8f0; border: none; cursor: pointer;">إلغاء</button>
+                        <button type="button" class="submit-reply-btn" data-id="${commentId}" style="padding: 5px 12px; border-radius: 12px; font-size: 11px; background: var(--purple); color: white; border: none; cursor: pointer;">نشر الرد</button>
                     </div>
                 </div>
             `;
@@ -306,7 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById(`reply-box-${commentId}`).innerHTML = "";
         }
 
-        // Submit Reply
+        // Submit Reply with Device ID
         const submitReplyBtn = e.target.closest('.submit-reply-btn');
         if (submitReplyBtn) {
             const commentId = submitReplyBtn.dataset.id;
@@ -323,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (snap.exists()) {
                 const currentReplies = snap.data().replies || [];
                 const newReply = {
+                    deviceId: deviceId, // حماية الرد لجهاز اليوزر فقط
                     name: nameInput.value.trim(),
                     message: msgInput.value.trim(),
                     date: new Date().toLocaleDateString(),
@@ -335,8 +382,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         replies: [...currentReplies, newReply]
                     });
                     document.getElementById(`reply-box-${commentId}`).innerHTML = "";
-                } else {
-                    // fallback
                 } catch (err) {
                     console.error("Error adding reply:", err);
                 }
