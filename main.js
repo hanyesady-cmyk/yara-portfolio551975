@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 6. Render Comments Dynamically
+    // 6. Render Comments Dynamically with Optimized Compact UI & Separator
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
@@ -133,19 +133,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 let repliesHTML = '';
                 if (data.replies && data.replies.length > 0) {
-                    repliesHTML = '<div class="replies-container">';
+                    repliesHTML = '<div class="replies-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-left: 15px; border-left: 2px solid var(--border-color);">';
                     data.replies.forEach((reply, rIndex) => {
                         const replyLikes = reply.likes || 0;
-                        
-                        // التعديل هنا: بما إنك صاحب المتصفح/الجهاز، هنخليك تقدر تعدل وتمسح أي ريبلاي (أو لو الـ deviceId مطابق أو مش موجود للردود القديمة)
-                        // عشان تضمن إن زرارين Edit و Delete يظهروا قدامك وتقدر تتحكم فيهم براحتك.
                         const isReplyOwner = true; 
                         
                         repliesHTML += `
-                            <div class="reply-card" data-reply-index="${rIndex}">
-                                <div class="reply-header">
-                                    <span><b>${escapeHTML(reply.name || "User")}</b></span>
-                                    <span style="display: flex; gap: 8px; align-items: center;">
+                            <div class="reply-card" data-reply-index="${rIndex}" style="background: rgba(0,0,0,0.02); padding: 8px 10px; border-radius: 6px; font-size: 13px;">
+                                <div class="reply-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <span style="font-size: 12px;"><b>${escapeHTML(reply.name || "User")}</b></span>
+                                    <span style="display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--text-muted);">
                                         ${reply.date || ""}
                                         ${isReplyOwner ? `
                                             <button class="edit-reply-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-size:11px; font-weight:600;">Edit</button>
@@ -153,9 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ` : ''}
                                     </span>
                                 </div>
-                                <div class="reply-text" id="reply-text-${id}-${rIndex}">${escapeHTML(reply.message || "")}</div>
-                                <div class="comment-actions">
-                                    <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}">
+                                <div class="reply-text" id="reply-text-${id}-${rIndex}" style="margin-bottom: 6px; color: var(--text-color);">${escapeHTML(reply.message || "")}</div>
+                                <div class="comment-actions" style="display: flex; align-items: center;">
+                                    <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background: none; border: none; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px;">
                                         ❤️ <span>${replyLikes}</span>
                                     </button>
                                 </div>
@@ -183,10 +180,11 @@ document.addEventListener("DOMContentLoaded", () => {
                             ` : ''}
                         </div>
                     </div>
-                    <p class="comment-text" id="comment-text-${id}">${escapeHTML(data.message || "")}</p>
+                    <p class="comment-text" id="comment-text-${id}" style="margin-bottom: 12px;">${escapeHTML(data.message || "")}</p>
                     
-                    <div class="comment-actions" style="justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px;">
-                        <button class="action-btn comment-like-btn" data-id="${id}">
+                    <!-- فصل واضح بين نص الكومنت وزرار اللايف والرد -->
+                    <div class="comment-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 8px;">
+                        <button class="action-btn comment-like-btn" data-id="${id}" style="background: none; border: none; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px;">
                             ❤️ <span>${commentLikes}</span>
                         </button>
                         <button class="reply-btn" data-id="${id}" style="background: none; border: none; color: var(--blue); cursor: pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
@@ -271,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const deleteBtn = e.target.closest('.delete-btn');
         if (deleteBtn) {
             const commentId = deleteBtn.dataset.id;
-            if (confirm("متأكد إنك عايز تحذف الكومنت ده؟")) {
+            if (confirm("Are you sure you want to delete this comment?")) {
                 try { await deleteDoc(doc(db, "comments", commentId)); } catch (err) { console.error(err); }
             }
         }
@@ -282,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const commentId = editBtn.dataset.id;
             const textEl = document.getElementById(`comment-text-${commentId}`);
             const currentText = textEl ? textEl.textContent : "";
-            let newText = prompt("عدل تعليقك:", currentText);
+            let newText = prompt("Edit your comment:", currentText);
             if (newText !== null && newText.trim() !== "") {
                 try { await updateDoc(doc(db, "comments", commentId), { message: newText.trim() }); } catch (err) { console.error(err); }
             }
@@ -293,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (deleteReplyBtn) {
             const commentId = deleteReplyBtn.dataset.commentId;
             const rIndex = parseInt(deleteReplyBtn.dataset.replyIndex);
-            if (confirm("متأكد إنك عايز تحذف الرد ده؟")) {
+            if (confirm("Are you sure you want to delete this reply?")) {
                 const ref = doc(db, "comments", commentId);
                 const snap = await getDoc(ref);
                 if (snap.exists()) {
@@ -314,17 +312,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (snap.exists()) {
                 let replies = snap.data().replies || [];
                 if (replies[rIndex]) {
-                    let newMsg = prompt("عدل الرد:", replies[rIndex].message);
+                    let newMsg = prompt("Edit your reply:", replies[rIndex].message);
                     if (newMsg !== null && newMsg.trim() !== "") {
                         replies[rIndex].message = newMsg.trim();
-                        replies[rIndex].deviceId = deviceId; // ربطه بجهازك الحالي
+                        replies[rIndex].deviceId = deviceId;
                         try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
                     }
                 }
             }
         }
 
-        // Toggle YouTube-style Inline Reply Box
+        // Toggle YouTube-style Inline Reply Box (English UI)
         const replyBtn = e.target.closest('.reply-btn');
         if (replyBtn) {
             const commentId = replyBtn.dataset.id;
@@ -338,12 +336,12 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll('[id^="reply-box-"]').forEach(el => el.innerHTML = "");
 
             boxContainer.innerHTML = `
-                <div class="inline-reply-box" style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
-                    <input type="text" id="replyName_${commentId}" placeholder="اسمك" required style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none;">
-                    <textarea id="replyMsg_${commentId}" placeholder="اكتب ردك..." required style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; height: 55px; resize: none; outline: none;"></textarea>
+                <div class="inline-reply-box" style="margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="replyName_${commentId}" placeholder="Your Name" required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none;">
+                    <textarea id="replyMsg_${commentId}" placeholder="Write your reply..." required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; height: 50px; resize: none; outline: none;"></textarea>
                     <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                        <button type="button" class="cancel-reply-btn" data-id="${commentId}" style="padding: 5px 12px; border-radius: 12px; font-size: 11px; background: #e2e8f0; border: none; cursor: pointer;">إلغاء</button>
-                        <button type="button" class="submit-reply-btn" data-id="${commentId}" style="padding: 5px 12px; border-radius: 12px; font-size: 11px; background: var(--purple); color: white; border: none; cursor: pointer;">نشر الرد</button>
+                        <button type="button" class="cancel-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: #e2e8f0; border: none; cursor: pointer;">Cancel</button>
+                        <button type="button" class="submit-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: var(--purple); color: white; border: none; cursor: pointer;">Post Reply</button>
                     </div>
                 </div>
             `;
@@ -364,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const msgInput = document.getElementById(`replyMsg_${commentId}`);
 
             if (!nameInput.value.trim() || !msgInput.value.trim()) {
-                alert("من فضلك اكتب الاسم والرد!");
+                alert("Please fill in your name and reply message!");
                 return;
             }
 
