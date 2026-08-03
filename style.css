@@ -609,15 +609,15 @@ nav ul li a:hover, nav ul li a.active{
     .right-nav button{ display: none; }
 
     .hero{ 
-        flex-direction: row; 
+        flex-direction: column-reverse; /* الصورة تظهر أولاً ثم الكونتنت تحتها */
         align-items: center;
-        justify-content: space-between;
+        text-align: center;
         padding-top: 90px;
-        gap: 12px;
+        gap: 20px;
     }
 
-    .content { flex: 1.2; }
-    .image { flex: 0.8; }
+    .content { flex: 1; width: 100%; }
+    .image { flex: 1; width: 100%; margin-bottom: 10px; }
 
     .content h1 { font-size: 26px; line-height: 1.2; margin-bottom: 8px; }
     .content h2 { font-size: 15px; margin-bottom: 10px; }
@@ -631,10 +631,10 @@ nav ul li a:hover, nav ul li a.active{
         border-radius: 6px;
     }
 
-    .buttons { gap: 8px; }
+    .buttons { gap: 8px; justify-content: center; }
 
     .image img {
-        max-width: 100%;
+        max-width: 260px;
         border-radius: 12px;
         padding: 4px;
     }
