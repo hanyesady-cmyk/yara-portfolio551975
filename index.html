@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yara Hani | Full Stack Developer</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div class="logo">Yara<span>.</span></div>
+            <ul id="navLinks">
+                <li><a href="#home" class="active">Home</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#comments">Comments</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="right-nav">
+                <button onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Hire Me</button>
+                <i class="fa-solid fa-bars" id="menuBtn"></i>
+            </div>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero scroll-reveal" id="home">
+        <div class="content">
+            <h3>Hello, I'm</h3>
+            <h1>Yara Hani</h1>
+            <h2>Full Stack Web Developer</h2>
+            <p>
+                I build modern, responsive and interactive web applications using
+                HTML, CSS, JavaScript, React.js, Node.js, Express.js and Firebase.
+                I enjoy creating beautiful interfaces with powerful backend solutions.
+            </p>
+
+            <div class="hero-skills">
+                HTML • CSS • JavaScript • Bootstrap • React.js • Node.js • Express.js • Firebase • Git & GitHub
+            </div>
+
+            <div class="buttons">
+                <a href="#projects" class="btn">View Projects</a>
+                <a href="#contact" class="btn2">Contact Me</a>
+            </div>
+        </div>
+
+        <div class="image">
+            <img src="2bb34d26-5f92-49e6-a2b2-53291fcd54d1.png" alt="Yara Hani">
+        </div>
+    </section>
+
+    <!-- SKILLS SECTION -->
+    <section class="skills scroll-reveal" id="skills">
+        <h2 class="section-title">My Skills</h2>
+        <p class="section-desc">I build complete Full Stack applications with modern technologies.</p>
+
+        <div class="skills-container">
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-html5"></i>
+                <h3>HTML5</h3>
+                <p>Semantic and SEO friendly structure.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-css3-alt"></i>
+                <h3>CSS3</h3>
+                <p>Responsive layouts and modern UI.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-js"></i>
+                <h3>JavaScript</h3>
+                <p>Interactive web applications.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-bootstrap"></i>
+                <h3>Bootstrap</h3>
+                <p>Reusable responsive components.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-react"></i>
+                <h3>React.js</h3>
+                <p>Reusable components and SPA apps.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-node-js"></i>
+                <h3>Node.js</h3>
+                <p>Server-side JavaScript development.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-solid fa-server"></i>
+                <h3>Express.js</h3>
+                <p>REST APIs and backend services.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-solid fa-fire"></i>
+                <h3>Firebase</h3>
+                <p>Realtime database and cloud services.</p>
+            </div>
+            <div class="skill-card scroll-reveal">
+                <i class="fa-brands fa-github"></i>
+                <h3>Git & GitHub</h3>
+                <p>Version control and deployment.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROJECTS SECTION -->
+    <section class="projects scroll-reveal" id="projects">
+        <h2 class="section-title">My Projects</h2>
+        <p class="section-desc">Some of my recent Full Stack projects. Watch demos and interact with likes.</p>
+
+        <div class="projects-container">
+            <!-- Project 1 -->
+            <div class="project-card scroll-reveal">
+                <div class="project-image">
+                    <video class="project-video" muted preload="metadata">
+                        <source src="https://res.cloudinary.com/yerzxiba/video/upload/v1785705568/elegance_y1pwe0.mp4" type="video/mp4">
+                    </video>
+                    <div class="project-overlay">
+                        <button class="play-btn" data-id="project1" onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705568/elegance_y1pwe0.mp4')">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3>Elegance Website</h3>
+                <p>Responsive fashion website built with HTML, CSS and JavaScript.</p>
+                <button class="like-btn project-like" data-id="project1">
+                    ❤️ <span class="project-likes">0</span> Likes
+                </button>
+            </div>
+
+            <!-- Project 2 -->
+            <div class="project-card scroll-reveal">
+                <div class="project-image">
+                    <video class="project-video" muted preload="metadata">
+                        <source src="https://res.cloudinary.com/yerzxiba/video/upload/v1785705342/Product_Showcase_-_Google_Chrome_2025-12-03_13-31-07_papzpo.mp4" type="video/mp4">
+                    </video>
+                    <div class="project-overlay">
+                        <button class="play-btn" data-id="project2" onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705342/Product_Showcase_-_Google_Chrome_2025-12-03_13-31-07_papzpo.mp4')">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3>Product Showcase</h3>
+                <p>Interactive product landing page with modern responsive design.</p>
+                <button class="like-btn project-like" data-id="project2">
+                    ❤️ <span class="project-likes">0</span> Likes
+                </button>
+            </div>
+
+            <!-- Project 3 -->
+            <div class="project-card scroll-reveal">
+                <div class="project-image">
+                    <video class="project-video" muted preload="metadata">
+                        <source src="https://res.cloudinary.com/yerzxiba/video/upload/v1785705514/WhatsApp_Video_2026-08-01_at_1.17.55_AM_vtkrid.mp4" type="video/mp4">
+                    </video>
+                    <div class="project-overlay">
+                        <button class="play-btn" data-id="project3" onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705514/WhatsApp_Video_2026-08-01_at_1.17.55_AM_vtkrid.mp4')">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3>Portfolio Website</h3>
+                <p>Full Stack portfolio with projects, skills and Firebase integration.</p>
+                <button class="like-btn project-like" data-id="project3">
+                    ❤️ <span class="project-likes">0</span> Likes
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMMENTS SECTION -->
+    <section class="comments-section scroll-reveal" id="comments">
+        <h2 class="section-title">Community Comments</h2>
+        <p class="section-desc">Share your opinion or leave a feedback!</p>
+
+        <form id="commentForm" class="comment-form">
+            <input type="text" id="commentName" placeholder="Your Name" required>
+            <textarea id="commentMessage" placeholder="Write your comment..." required></textarea>
+            <button type="submit" class="btn-submit">Post Comment</button>
+        </form>
+
+        <div id="commentsContainer" class="comments-container">
+            <!-- Firebase Comments Load Dynamically -->
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section class="contact scroll-reveal" id="contact">
+        <h2 class="section-title">Contact Me</h2>
+        <p class="section-desc">Let's work together! Feel free to contact me anytime.</p>
+
+        <div class="contact-container">
+            <div class="contact-info">
+                <div class="info-item scroll-reveal">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div>
+                        <h3>Email</h3>
+                        <a href="mailto:yara@example.com">hanyesady@gmail.com</a>
+                    </div>
+                </div>
+                <div class="info-item scroll-reveal">
+                    <i class="fa-brands fa-linkedin"></i>
+                    <div>
+                        <h3>LinkedIn</h3>
+                        <a href="https://www.linkedin.com/in/yara-hany-1451693ab" target="_blank">LinkedIn Profile</a>
+                    </div>
+                </div>
+                <div class="info-item scroll-reveal">
+                    <i class="fa-solid fa-phone"></i>
+                    <div>
+                        <h3>Phone</h3>
+                        <a href="tel:01009116671">01009116671</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© <span id="year"></span> All Rights Reserved | Designed & Developed by <a href="#home">Yara Hani</a></p>
+    </footer>
+
+    <!-- VIDEO MODAL -->
+    <div class="video-modal" id="videoModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeVideo()"><i class="fa-solid fa-xmark"></i></button>
+            <video id="videoPlayer" controls></video>
+        </div>
+    </div>
+
+    <!-- FIREBASE MODULE -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>
