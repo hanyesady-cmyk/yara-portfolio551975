@@ -4,7 +4,6 @@ import {
     getFirestore, 
     collection, 
     addDoc, 
-    getDocs, 
     doc, 
     updateDoc, 
     deleteDoc, 
@@ -14,14 +13,14 @@ import {
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// TODO: استبدل بيانات الإعدادات دي ببيانات مشروعك الحقيقي من Firebase Console
+// Firebase Configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
+    authDomain: "ga-for-windows-99879.firebaseapp.com",
+    projectId: "ga-for-windows-99879",
+    storageBucket: "ga-for-windows-99879.firebasestorage.app",
+    messagingSenderId: "590172219222",
+    appId: "1:590172219222:web:0202ac673e26a56c1a58f7"
 };
 
 // Initialize Firebase
@@ -119,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const commentsContainer = document.getElementById("commentsContainer");
 
     if (commentForm && commentsContainer) {
-        // إرسال تعليق جديد إلى فايربيز
+        // Submit new comment to Firebase
         commentForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("commentName");
@@ -143,18 +142,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 textInput.value = "";
             } catch (error) {
                 console.error("Error adding comment: ", error);
-                alert("حدث خطأ أثناء إرسال التعليق، تأكد من ضبط إعدادات فايربيز وسلاح الصلاحيات (Firestore Rules).");
+                alert("Error sending comment. Please check your Firebase settings.");
             }
         });
 
-        // جلب التعليقات وعرضها بشكل لحظي (Real-time listener)
+        // Real-time listener for comments
         const q = query(collection(db, "comments"), orderBy("createdAt", "desc"));
         
         onSnapshot(q, (snapshot) => {
             commentsContainer.innerHTML = "";
             
             if (snapshot.empty) {
-                commentsContainer.innerHTML = `<p style="text-align:center; color: var(--text-muted); font-size: 14px;">لا توجد تعليقات حتى الآن. كن أول من يعلق!</p>`;
+                commentsContainer.innerHTML = `<p style="text-align:center; color: var(--text-muted); font-size: 14px;">No comments yet. Be the first to comment!</p>`;
                 return;
             }
 
@@ -172,16 +171,16 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="avatar">${commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U'}</div>
                             <div class="comment-info">
                                 <h3>${escapeHtml(commentData.name)}</h3>
-                                <span class="comment-date">منذ قليل</span>
+                                <span class="comment-date">Just now</span>
                             </div>
                         </div>
                     </div>
                     <p class="comment-text">${escapeHtml(commentData.text)}</p>
                     <div class="comment-actions">
                         <button class="comment-like-btn"><i class="fa-regular fa-heart"></i> <span>${commentData.likes || 0}</span></button>
-                        <button class="reply-btn"><i class="fa-solid fa-reply"></i> رد</button>
-                        <button class="edit-btn"><i class="fa-solid fa-pen"></i> تعديل</button>
-                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> حذف</button>
+                        <button class="reply-btn"><i class="fa-solid fa-reply"></i> Reply</button>
+                        <button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>
                     <div class="replies-container"></div>
                 `;
@@ -193,11 +192,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ربط تفاعلات التعليق (لايك، تعديل، حذف، رد) بقاعدة بيانات فايربيز
+    // Attach event listeners for comments (like, edit, delete, reply)
     function attachFirestoreCommentEvents(commentCard, commentId) {
         const commentRef = doc(db, "comments", commentId);
 
-        // 1. لايك التعليق
+        // 1. Comment Like
         const likeBtn = commentCard.querySelector(".comment-like-btn");
         likeBtn.addEventListener("click", async () => {
             const isLiked = likeBtn.classList.toggle("liked");
@@ -221,10 +220,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 2. حذف التعليق
+        // 2. Delete Comment
         const deleteBtn = commentCard.querySelector(".delete-btn");
         deleteBtn.addEventListener("click", async () => {
-            if (confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
+            if (confirm("Are you sure you want to delete this comment?")) {
                 try {
                     await deleteDoc(commentRef);
                 } catch (err) {
@@ -233,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 3. تعديل التعليق
+        // 3. Edit Comment
         const editBtn = commentCard.querySelector(".edit-btn");
         const commentTextEl = commentCard.querySelector(".comment-text");
         editBtn.addEventListener("click", () => {
@@ -244,8 +243,8 @@ document.addEventListener("DOMContentLoaded", () => {
             editBox.innerHTML = `
                 <textarea>${commentTextEl.textContent}</textarea>
                 <div style="display: flex; gap: 8px;">
-                    <button class="submit-btn-action save-edit">حفظ</button>
-                    <button class="cancel-btn cancel-edit">إلغاء</button>
+                    <button class="submit-btn-action save-edit">Save</button>
+                    <button class="cancel-btn cancel-edit">Cancel</button>
                 </div>
             `;
             commentCard.appendChild(editBox);
@@ -268,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // 4. زر إضافة رد
+        // 4. Reply Box Toggle & Submission
         const replyBtn = commentCard.querySelector(".reply-btn");
         const repliesContainer = commentCard.querySelector(".replies-container");
         replyBtn.addEventListener("click", () => {
@@ -277,11 +276,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const replyBox = document.createElement("div");
             replyBox.classList.add("inline-reply-box");
             replyBox.innerHTML = `
-                <input type="text" placeholder="اسمك الكريم..." class="reply-name-input">
-                <textarea placeholder="اكتب ردك هنا..."></textarea>
+                <input type="text" placeholder="Your name..." class="reply-name-input">
+                <textarea placeholder="Write your reply here..."></textarea>
                 <div style="display: flex; gap: 8px;">
-                    <button class="submit-btn-action send-reply">إرسال الرد</button>
-                    <button class="cancel-btn cancel-reply">إلغاء</button>
+                    <button class="submit-btn-action send-reply">Send Reply</button>
+                    <button class="cancel-btn cancel-reply">Cancel</button>
                 </div>
             `;
             commentCard.appendChild(replyBox);
@@ -310,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // جلب الردود الخاصة بكل تعليق بشكل لحظي
+    // Load real-time replies for each comment
     function loadReplies(commentId, repliesContainer) {
         const repliesQuery = query(collection(db, `comments/${commentId}/replies`), orderBy("createdAt", "asc"));
         
@@ -324,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 replyCard.innerHTML = `
                     <div class="reply-header">
                         <span><strong>${escapeHtml(replyData.name)}</strong></span>
-                        <span>منذ قليل</span>
+                        <span>Just now</span>
                     </div>
                     <p class="reply-text">${escapeHtml(replyData.text)}</p>
                 `;
@@ -333,7 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // دالة أمان لمنع الثغرات
+    // Security helper to prevent XSS
     function escapeHtml(text) {
         if (!text) return "";
         return text
