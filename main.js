@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 6. Render Comments Dynamically with Optimized Compact UI & Separator
+    // 6. Render Comments Dynamically with Clear Reply & Like Separation
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
@@ -133,14 +133,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 let repliesHTML = '';
                 if (data.replies && data.replies.length > 0) {
-                    repliesHTML = '<div class="replies-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-left: 15px; border-left: 2px solid var(--border-color);">';
+                    repliesHTML = '<div class="replies-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding-left: 15px; border-left: 2px solid var(--border-color);">';
                     data.replies.forEach((reply, rIndex) => {
                         const replyLikes = reply.likes || 0;
                         const isReplyOwner = true; 
                         
                         repliesHTML += `
-                            <div class="reply-card" data-reply-index="${rIndex}" style="background: rgba(0,0,0,0.02); padding: 8px 10px; border-radius: 6px; font-size: 13px;">
-                                <div class="reply-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <div class="reply-card" data-reply-index="${rIndex}" style="background: rgba(0,0,0,0.02); padding: 10px 12px; border-radius: 8px; font-size: 13px; border: 1px solid rgba(0,0,0,0.04);">
+                                <div class="reply-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                     <span style="font-size: 12px;"><b>${escapeHTML(reply.name || "User")}</b></span>
                                     <span style="display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--text-muted);">
                                         ${reply.date || ""}
@@ -150,8 +150,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                         ` : ''}
                                     </span>
                                 </div>
-                                <div class="reply-text" id="reply-text-${id}-${rIndex}" style="margin-bottom: 6px; color: var(--text-color);">${escapeHTML(reply.message || "")}</div>
-                                <div class="comment-actions" style="display: flex; align-items: center;">
+                                <div class="reply-text" id="reply-text-${id}-${rIndex}" style="margin-bottom: 8px; color: var(--text-color);">${escapeHTML(reply.message || "")}</div>
+                                
+                                <!-- فصل واضح بخط صغير بين نص الريبلاي وزرار اللايف الخاص به -->
+                                <div class="comment-actions" style="display: flex; align-items: center; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 6px; margin-top: 4px;">
                                     <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background: none; border: none; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px;">
                                         ❤️ <span>${replyLikes}</span>
                                     </button>
@@ -182,8 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <p class="comment-text" id="comment-text-${id}" style="margin-bottom: 12px;">${escapeHTML(data.message || "")}</p>
                     
-                    <!-- فصل واضح بين نص الكومنت وزرار اللايف والرد -->
-                    <div class="comment-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 8px;">
+                    <div style="border-top: 1px solid var(--border-color); margin-top: 14px; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <button class="action-btn comment-like-btn" data-id="${id}" style="background: none; border: none; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px;">
                             ❤️ <span>${commentLikes}</span>
                         </button>
@@ -322,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Toggle YouTube-style Inline Reply Box (Guaranteed English Placeholders & Buttons)
+        // Toggle YouTube-style Inline Reply Box
         const replyBtn = e.target.closest('.reply-btn');
         if (replyBtn) {
             const commentId = replyBtn.dataset.id;
