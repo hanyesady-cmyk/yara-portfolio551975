@@ -28,19 +28,28 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// ================= USER IDENTIFIER (للسماح بتعديل وحذف تعليقك فقط) =================
+let currentUserId = localStorage.getItem('portfolio_user_id');
+if (!currentUserId) {
+    currentUserId = 'user_' + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem('portfolio_user_id', currentUserId);
+}
+
 // ================= NAVBAR =================
 const menuBtn = document.getElementById("menuBtn");
 const navLinks = document.getElementById("navLinks");
 
-menuBtn.addEventListener("click", () => {
-    navLinks.classList.toggle("active");
-});
-
-document.querySelectorAll("#navLinks a").forEach(link => {
-    link.addEventListener("click", () => {
-        navLinks.classList.remove("active");
+if (menuBtn && navLinks) {
+    menuBtn.addEventListener("click", () => {
+        navLinks.classList.toggle("active");
     });
-});
+
+    document.querySelectorAll("#navLinks a").forEach(link => {
+        link.addEventListener("click", () => {
+            navLinks.classList.remove("active");
+        });
+    });
+}
 
 // ================= ACTIVE LINK ON SCROLL =================
 const sections = document.querySelectorAll("section");
@@ -80,21 +89,25 @@ const modal = document.getElementById("videoModal");
 const player = document.getElementById("videoPlayer");
 
 window.openVideo = (src) => {
+    if (!player || !modal) return;
     player.src = src;
     modal.classList.add("active");
     player.play();
 };
 
 window.closeVideo = () => {
+    if (!player || !modal) return;
     player.pause();
     player.currentTime = 0;
     player.src = "";
     modal.classList.remove("active");
 };
 
-modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeVideo();
-});
+if (modal) {
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeVideo();
+    });
+}
 
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeVideo();
@@ -143,21 +156,26 @@ const commentForm = document.getElementById("commentForm");
 const commentName = document.getElementById("commentName");
 const commentMessage = document.getElementById("commentMessage");
 
-commentForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (commentName.value.trim() === "" || commentMessage.value.trim() === "") return;
+if (commentForm) {
+    commentForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!commentName || !commentMessage) return;
+        if (commentName.value.trim() === "" || commentMessage.value.trim() === "") return;
 
-    await addDoc(commentsRef, {
-        name: commentName.value.trim(),
-        message: commentMessage.value.trim(),
-        likes: 0,
-        createdAt: serverTimestamp()
+        await addDoc(commentsRef, {
+            userId: currentUserId, // ربط التعليق بمالكه حصراً
+            name: commentName.value.trim(),
+            message: commentMessage.value.trim(),
+            likes: 0,
+            createdAt: serverTimestamp()
+        });
+
+        commentForm.reset();
     });
-
-    commentForm.reset();
-});
+}
 
 onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
+    if (!commentsContainer) return;
     commentsContainer.innerHTML = "";
     snapshot.forEach(commentDoc => {
         createCommentUI(commentDoc);
@@ -171,6 +189,9 @@ function createCommentUI(commentDoc) {
     card.className = "comment-card scroll-reveal show";
 
     const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
+    
+    // التحقق هل المستخدم الحالي هو صاحب التعليق لإظهار أزرار التعديل والحذف له فقط
+    const isOwner = data.userId === currentUserId;
 
     card.innerHTML = `
         <div class="comment-header">
@@ -179,6 +200,11 @@ function createCommentUI(commentDoc) {
                 <h3>${escapeHTML(data.name)}</h3>
                 <span class="comment-date">${dateStr}</span>
             </div>
+            ${isOwner ? `
+            <div class="comment-owner-actions" style="margin-right: auto; display: flex; gap: 8px;">
+                <button class="edit-comment-btn" onclick="updateComment('${id}', '${data.userId}')" style="padding: 4px 10px; font-size: 11px; background: rgba(13,202,240,0.15); color: #0dcaf0; border: 1px solid rgba(13,202,240,0.3); border-radius: 4px; cursor: pointer;">تعديل</button>
+                <button class="delete-comment-btn" onclick="deleteComment('${id}', '${data.userId}')" style="padding: 4px 10px; font-size: 11px; background: rgba(220,53,69,0.15); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.3); border-radius: 4px; cursor: pointer;">حذف</button>
+            </div>` : ''}
         </div>
         <p class="comment-text">${escapeHTML(data.message)}</p>
         <div class="comment-actions">
@@ -201,9 +227,51 @@ function createCommentUI(commentDoc) {
     loadReplies(id);
 }
 
+// ================= UPDATE & DELETE COMMENT FUNCTIONS =================
+window.deleteComment = async function(commentId, commentUserId) {
+    if (commentUserId !== currentUserId) {
+        alert("عذراً، لا يمكنك حذف تعليق شخص آخر!");
+        return;
+    }
+
+    if (confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
+        try {
+            await deleteDoc(doc(db, "comments", commentId));
+        } catch (error) {
+            console.error("Error deleting comment: ", error);
+            alert("حدث خطأ أثناء الحذف.");
+        }
+    }
+};
+
+window.updateComment = async function(commentId, commentUserId) {
+    if (commentUserId !== currentUserId) {
+        alert("عذراً، لا يمكنك تعديل تعليق شخص آخر!");
+        return;
+    }
+
+    let newText = prompt("قم بتعديل تعليقك:");
+    if (newText !== null) {
+        let trimmedText = newText.trim();
+        if (trimmedText !== "") {
+            try {
+                await updateDoc(doc(db, "comments", commentId), {
+                    message: trimmedText
+                });
+            } catch (error) {
+                console.error("Error updating comment: ", error);
+                alert("حدث خطأ أثناء التعديل.");
+            }
+        } else {
+            alert("لا يمكن أن يكون التعليق فارغاً!");
+        }
+    }
+};
+
 // ================= REPLIES SYSTEM =================
 function loadReplies(commentId) {
     const repliesContainer = document.getElementById(`replies-${commentId}`);
+    if (!repliesContainer) return;
     const repliesRef = collection(db, "comments", commentId, "replies");
 
     onSnapshot(query(repliesRef, orderBy("createdAt", "asc")), (snapshot) => {
@@ -256,7 +324,9 @@ document.addEventListener("click", async (e) => {
     if (replyToggleBtn) {
         const id = replyToggleBtn.dataset.id;
         const box = document.getElementById(`reply-box-${id}`);
-        box.style.display = box.style.display === "none" ? "flex" : "none";
+        if(box) {
+            box.style.display = box.style.display === "none" ? "flex" : "none";
+        }
         return;
     }
 
@@ -267,6 +337,7 @@ document.addEventListener("click", async (e) => {
         const nameInput = document.querySelector(`#reply-box-${commentId} .reply-name`);
         const messageInput = document.querySelector(`#reply-box-${commentId} .reply-message`);
 
+        if (!nameInput || !messageInput) return;
         if (nameInput.value.trim() === "" || messageInput.value.trim() === "") return;
 
         await addDoc(collection(db, "comments", commentId, "replies"), {
@@ -278,7 +349,8 @@ document.addEventListener("click", async (e) => {
 
         nameInput.value = "";
         messageInput.value = "";
-        document.getElementById(`reply-box-${commentId}`).style.display = "none";
+        const replyBox = document.getElementById(`reply-box-${commentId}`);
+        if(replyBox) replyBox.style.display = "none";
         return;
     }
 
@@ -300,6 +372,7 @@ document.addEventListener("click", async (e) => {
 
 // Helper for Security (Prevent XSS)
 function escapeHTML(str) {
+    if (!str) return "";
     return str.replace(/[&<>'"]/g, 
         tag => ({
             '&': '&amp;',
