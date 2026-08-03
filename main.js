@@ -28,7 +28,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ================= USER IDENTIFIER (للسماح بتعديل وحذف تعليقك فقط) =================
+// ================= USER IDENTIFIER (لضمان تعديل وحذف تعليقك فقط) =================
 let currentUserId = localStorage.getItem('portfolio_user_id');
 if (!currentUserId) {
     currentUserId = 'user_' + Math.random().toString(36).substring(2, 9);
@@ -163,7 +163,7 @@ if (commentForm) {
         if (commentName.value.trim() === "" || commentMessage.value.trim() === "") return;
 
         await addDoc(commentsRef, {
-            userId: currentUserId, // ربط التعليق بمالكه حصراً
+            userId: currentUserId, // ربط التعليق بمالكه
             name: commentName.value.trim(),
             message: commentMessage.value.trim(),
             likes: 0,
@@ -189,21 +189,21 @@ function createCommentUI(commentDoc) {
     card.className = "comment-card scroll-reveal show";
 
     const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
-    
-    // التحقق هل المستخدم الحالي هو صاحب التعليق لإظهار أزرار التعديل والحذف له فقط
     const isOwner = data.userId === currentUserId;
 
     card.innerHTML = `
         <div class="comment-header">
-            <div class="avatar">${data.name.charAt(0).toUpperCase()}</div>
-            <div class="comment-info">
-                <h3>${escapeHTML(data.name)}</h3>
-                <span class="comment-date">${dateStr}</span>
+            <div class="comment-user-info">
+                <div class="avatar">${data.name.charAt(0).toUpperCase()}</div>
+                <div class="comment-info">
+                    <h3>${escapeHTML(data.name)}</h3>
+                    <span class="comment-date">${dateStr}</span>
+                </div>
             </div>
             ${isOwner ? `
-            <div class="comment-owner-actions" style="margin-right: auto; display: flex; gap: 8px;">
-                <button class="edit-comment-btn" onclick="updateComment('${id}', '${data.userId}')" style="padding: 4px 10px; font-size: 11px; background: rgba(13,202,240,0.15); color: #0dcaf0; border: 1px solid rgba(13,202,240,0.3); border-radius: 4px; cursor: pointer;">تعديل</button>
-                <button class="delete-comment-btn" onclick="deleteComment('${id}', '${data.userId}')" style="padding: 4px 10px; font-size: 11px; background: rgba(220,53,69,0.15); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.3); border-radius: 4px; cursor: pointer;">حذف</button>
+            <div class="comment-owner-actions">
+                <button class="edit-comment-btn" onclick="updateComment('${id}', '${data.userId}')">تعديل</button>
+                <button class="delete-comment-btn" onclick="deleteComment('${id}', '${data.userId}')">حذف</button>
             </div>` : ''}
         </div>
         <p class="comment-text">${escapeHTML(data.message)}</p>
