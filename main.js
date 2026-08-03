@@ -12,8 +12,7 @@ import {
     serverTimestamp,
     query,
     orderBy,
-    onSnapshot,
-    arrayUnion
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -28,7 +27,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Global Video Modal Functions (Linked directly to HTML inline onclick)
+// Global Video Modal Functions
 window.openVideo = function(videoUrl) {
     const modal = document.getElementById('videoModal');
     const player = document.getElementById('videoPlayer');
@@ -52,17 +51,13 @@ window.closeVideo = function() {
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Footer Year
     const yearSpan = document.getElementById('year');
-    if (yearSpan) {
-        yearSpan.textContent = new Date().getFullYear();
-    }
+    if (yearSpan) yearSpan.textContent = new Date().getFullYear();
 
     // 2. Mobile Menu Toggle
     const menuBtn = document.getElementById('menuBtn');
     const navLinks = document.getElementById('navLinks');
     if (menuBtn && navLinks) {
-        menuBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
+        menuBtn.addEventListener('click', () => navLinks.classList.toggle('active'));
     }
 
     // 3. Device ID Management
@@ -87,9 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         snapshot.forEach(project => {
             const data = project.data();
             const likeSpan = document.querySelector(`[data-id="${project.id}"] .project-likes`);
-            if (likeSpan) {
-                likeSpan.textContent = data.likes || 0;
-            }
+            if (likeSpan) likeSpan.textContent = data.likes || 0;
         });
     });
 
@@ -110,6 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     deviceId: deviceId,
                     name: commentName.value.trim(),
                     message: commentMessage.value.trim(),
+                    likes: 0,
+                    likedBy: [],
                     replies: [],
                     createdAt: serverTimestamp()
                 });
@@ -133,14 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = commentDoc.data();
                 const id = commentDoc.id;
                 const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
-                
-                const commentDeviceId = data.deviceId || deviceId;
-                const isOwner = (commentDeviceId === deviceId);
+                const isOwner = (data.deviceId === deviceId);
+                const commentLikes = data.likes || 0;
 
                 let repliesHTML = '';
                 if (data.replies && data.replies.length > 0) {
                     repliesHTML = '<div class="replies-container">';
-                    data.replies.forEach(reply => {
+                    data.replies.forEach((reply, rIndex) => {
+                        const replyLikes = reply.likes || 0;
                         repliesHTML += `
                             <div class="reply-card">
                                 <div class="reply-header">
@@ -148,6 +143,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <span>${reply.date || ""}</span>
                                 </div>
                                 <div class="reply-text">${escapeHTML(reply.message)}</div>
+                                <div class="comment-actions">
+                                    <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}">
+                                        ❤️ <span>${replyLikes}</span>
+                                    </button>
+                                </div>
                             </div>
                         `;
                     });
@@ -174,6 +174,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     <p class="comment-text">${escapeHTML(data.message)}</p>
+                    <div class="comment-actions">
+                        <button class="action-btn comment-like-btn" data-id="${id}">
+                            ❤️ <span>${commentLikes}</span>
+                        </button>
+                    </div>
+                    <div id="reply-box-${id}"></div>
                     ${repliesHTML}
                 `;
                 commentsContainer.appendChild(card);
@@ -181,27 +187,69 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 7. Global Event Delegation (Likes, Delete, Edit, Reply)
+    // 7. Global Event Delegation
     document.addEventListener('click', async (e) => {
-        // Likes Click
+        // Project Likes
         const likeBtn = e.target.closest('.project-like');
         if (likeBtn) {
             const projectId = likeBtn.dataset.id;
             if (!projectId) return;
-            
             const storageKey = `liked_${projectId}`;
             if (localStorage.getItem(storageKey)) {
                 alert("You already liked this project ❤️");
                 return;
             }
-            
             try {
-                await updateDoc(doc(db, "projects", projectId), { 
-                    likes: increment(1) 
-                });
+                await updateDoc(doc(db, "projects", projectId), { likes: increment(1) });
                 localStorage.setItem(storageKey, "true");
-            } catch (error) {
-                console.error("Error adding like:", error);
+            } catch (err) { console.error(err); }
+        }
+
+        // Comment Like
+        const cLikeBtn = e.target.closest('.comment-like-btn');
+        if (cLikeBtn) {
+            const commentId = cLikeBtn.dataset.id;
+            const ref = doc(db, "comments", commentId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const commentData = snap.data();
+                const likedBy = commentData.likedBy || [];
+                if (likedBy.includes(deviceId)) {
+                    alert("You already liked this comment ❤️");
+                    return;
+                }
+                try {
+                    await updateDoc(ref, {
+                        likes: increment(1),
+                        likedBy: [...likedBy, deviceId]
+                    });
+                } catch (err) { console.error(err); }
+            }
+        }
+
+        // Reply Like
+        const rLikeBtn = e.target.closest('.reply-like-btn');
+        if (rLikeBtn) {
+            const commentId = rLikeBtn.dataset.commentId;
+            const rIndex = parseInt(rLikeBtn.dataset.replyIndex);
+            const ref = doc(db, "comments", commentId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const data = snap.data();
+                let replies = data.replies || [];
+                if (replies[rIndex]) {
+                    // Check if already liked reply by this device
+                    const rLikedBy = replies[rIndex].likedBy || [];
+                    if (rLikedBy.includes(deviceId)) {
+                        alert("You already liked this reply ❤️");
+                        return;
+                    }
+                    replies[rIndex].likes = (replies[rIndex].likes || 0) + 1;
+                    replies[rIndex].likedBy = [...rLikedBy, deviceId];
+                    try {
+                        await updateDoc(ref, { replies: replies });
+                    } catch (err) { console.error(err); }
+                }
             }
         }
 
@@ -210,11 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (deleteBtn) {
             const commentId = deleteBtn.dataset.id;
             if (confirm("متأكد إنك عايز تحذف الكومنت ده؟")) {
-                try {
-                    await deleteDoc(doc(db, "comments", commentId));
-                } catch (error) {
-                    console.error("Error deleting comment:", error);
-                }
+                try { await deleteDoc(doc(db, "comments", commentId)); } catch (err) { console.error(err); }
             }
         }
 
@@ -224,36 +268,78 @@ document.addEventListener("DOMContentLoaded", () => {
             const commentId = editBtn.dataset.id;
             let newText = prompt("عدل تعليقك:");
             if (newText !== null && newText.trim() !== "") {
-                try {
-                    await updateDoc(doc(db, "comments", commentId), { 
-                        message: newText.trim() 
-                    });
-                } catch (error) {
-                    console.error("Error updating comment:", error);
-                }
+                try { await updateDoc(doc(db, "comments", commentId), { message: newText.trim() }); } catch (err) { console.error(err); }
             }
         }
 
-        // Reply to Comment
+        // Toggle YouTube-style Inline Reply Box
         const replyBtn = e.target.closest('.reply-btn');
         if (replyBtn) {
             const commentId = replyBtn.dataset.id;
-            let replyName = prompt("اسمك للرد:");
-            if (!replyName || !replyName.trim()) return;
+            const boxContainer = document.getElementById(`reply-box-${commentId}`);
+            
+            // If already open, close it
+            if (boxContainer.innerHTML.trim() !== "") {
+                boxContainer.innerHTML = "";
+                return;
+            }
 
-            let replyMsg = prompt("الرد بتاعك:");
-            if (!replyMsg || !replyMsg.trim()) return;
+            // Close any other open reply boxes
+            document.querySelectorAll('[id^="reply-box-"]').forEach(el => el.innerHTML = "");
 
-            try {
-                await updateDoc(doc(db, "comments", commentId), {
-                    replies: arrayUnion({
-                        name: replyName.trim(),
-                        message: replyMsg.trim(),
-                        date: new Date().toLocaleDateString()
-                    })
-                });
-            } catch (error) {
-                console.error("Error adding reply:", error);
+            boxContainer.innerHTML = `
+                <div class="inline-reply-box">
+                    <input type="text" id="replyName_${commentId}" placeholder="Your Name" required>
+                    <textarea id="replyMsg_${commentId}" placeholder="Write a reply..." required></textarea>
+                    <div class="reply-form-btns">
+                        <button type="button" class="cancel-reply-btn" data-id="${commentId}">Cancel</button>
+                        <button type="button" class="submit-reply-btn" data-id="${commentId}">Reply</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Cancel Reply
+        const cancelBtn = e.target.closest('.cancel-reply-btn');
+        if (cancelBtn) {
+            const commentId = cancelBtn.dataset.id;
+            document.getElementById(`reply-box-${commentId}`).innerHTML = "";
+        }
+
+        // Submit Reply
+        const submitReplyBtn = e.target.closest('.submit-reply-btn');
+        if (submitReplyBtn) {
+            const commentId = submitReplyBtn.dataset.id;
+            const nameInput = document.getElementById(`replyName_${commentId}`);
+            const msgInput = document.getElementById(`replyMsg_${commentId}`);
+
+            if (!nameInput.value.trim() || !msgInput.value.trim()) {
+                alert("من فضلك اكتب الاسم والرد!");
+                return;
+            }
+
+            const ref = doc(db, "comments", commentId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const currentReplies = snap.data().replies || [];
+                const newReply = {
+                    name: nameInput.value.trim(),
+                    message: msgInput.value.trim(),
+                    date: new Date().toLocaleDateString(),
+                    likes: 0,
+                    likedBy: []
+                };
+
+                try {
+                    await updateDoc(ref, {
+                        replies: [...currentReplies, newReply]
+                    });
+                    document.getElementById(`reply-box-${commentId}`).innerHTML = "";
+                } else {
+                    // fallback
+                } catch (err) {
+                    console.error("Error adding reply:", err);
+                }
             }
         }
     });
