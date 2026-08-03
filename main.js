@@ -5,6 +5,8 @@ import {
     collection, 
     addDoc, 
     doc, 
+    getDoc,
+    setDoc,
     updateDoc, 
     deleteDoc, 
     onSnapshot, 
@@ -96,31 +98,65 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 4. General Like Buttons (Projects) ---
-    document.querySelectorAll(".project-like").forEach(btn => {
-        btn.addEventListener("click", function() {
-            this.classList.toggle("liked");
-            const icon = this.querySelector("i");
-            const span = this.querySelector("span");
+    // --- 4. Projects Real-time Likes from Firebase ---
+    document.querySelectorAll(".project-card").forEach((card, index) => {
+        const projectId = `project_${index + 1}`;
+        const likeBtn = card.querySelector(".project-like");
+        if (!likeBtn) return;
 
-            if (this.classList.contains("liked")) {
-                if (icon) icon.className = "fa-solid fa-heart";
-                if (span) span.textContent = parseInt(span.textContent || 0) + 1;
-            } else {
-                if (icon) icon.className = "fa-regular fa-heart";
-                if (span) span.textContent = Math.max(0, parseInt(span.textContent || 1) - 1);
+        const span = likeBtn.querySelector("span");
+        const icon = likeBtn.querySelector("i");
+        const projectRef = doc(db, "projects_likes", projectId);
+
+        // Fetch initial likes
+        getDoc(projectRef).then((docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                span.textContent = `${data.likes || 0} Likes`;
+            }
+        });
+
+        likeBtn.addEventListener("click", async () => {
+            const isLiked = likeBtn.classList.toggle("liked");
+            let currentLikes = parseInt(span.textContent) || 0;
+            let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+            
+            span.textContent = `${newLikes} Likes`;
+            icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+
+            try {
+                await setDoc(projectRef, { likes: newLikes }, { merge: true });
+            } catch (err) {
+                console.error("Error updating project like:", err);
             }
         });
     });
+
+    // --- Helper: Time Ago Formatter ---
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return "Just now";
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const seconds = Math.floor((new Date() - date) / 1000);
+
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return "Just now";
+    }
 
     // --- 5. Firebase Real-time Comments & Replies System ---
     const commentForm = document.getElementById("commentForm");
     const commentsContainer = document.getElementById("commentsContainer");
 
-    // Helper to get or set current user session name locally
     function getCurrentUser() {
-        let user = localStorage.getItem("portfolio_user");
-        return user ? user : "";
+        return localStorage.getItem("portfolio_user") || "";
     }
 
     if (commentForm && commentsContainer) {
@@ -136,7 +172,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (name === "" || text === "") return;
 
-            // Save user name in localStorage to remember ownership
             localStorage.setItem("portfolio_user", name);
 
             try {
@@ -150,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 textInput.value = "";
             } catch (error) {
                 console.error("Error adding comment: ", error);
-                alert("Error sending comment. Please check your Firebase settings.");
+                alert("Error sending comment.");
             }
         });
 
@@ -172,8 +207,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const authorName = commentData.name || commentData.userName || "Anonymous";
                 const currentUser = getCurrentUser();
 
-                // Check if current visitor is the owner of this comment
-                const isOwner = currentUser && authorName.toLowerCase() === currentUser.toLowerCase();
+                // Strict Ownership Verification
+                const isOwner = currentUser && authorName.trim().toLowerCase() === currentUser.trim().toLowerCase();
+                const timeAgo = formatTimeAgo(commentData.createdAt);
 
                 const commentCard = document.createElement("div");
                 commentCard.classList.add("comment-card");
@@ -185,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="avatar">${authorName.charAt(0).toUpperCase()}</div>
                             <div class="comment-info">
                                 <h3>${escapeHtml(authorName)}</h3>
-                                <span class="comment-date">Just now</span>
+                                <span class="comment-date">${timeAgo}</span>
                             </div>
                         </div>
                     </div>
@@ -193,23 +229,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="comment-actions">
                         <button class="comment-like-btn"><i class="fa-regular fa-heart"></i> <span>${commentData.likes || 0}</span></button>
                         <button class="reply-btn"><i class="fa-solid fa-reply"></i> Reply</button>
-                        ${isOwner ? `<button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
-                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                        ${isOwner ? `
+                            <button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
+                        ` : ''}
                     </div>
                     <div class="replies-container"></div>
                 `;
 
                 commentsContainer.appendChild(commentCard);
-                attachFirestoreCommentEvents(commentCard, commentId);
+                attachFirestoreCommentEvents(commentCard, commentId, authorName);
                 loadReplies(commentId, commentCard.querySelector(".replies-container"));
             });
         });
     }
 
-    function attachFirestoreCommentEvents(commentCard, commentId) {
+    function attachFirestoreCommentEvents(commentCard, commentId, authorName) {
         const commentRef = doc(db, "comments", commentId);
 
-        // 1. Comment Like
+        // Comment Like
         const likeBtn = commentCard.querySelector(".comment-like-btn");
         likeBtn.addEventListener("click", async () => {
             const isLiked = likeBtn.classList.toggle("liked");
@@ -219,7 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
             let currentLikes = parseInt(span.textContent) || 0;
             let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
             span.textContent = newLikes;
-
             icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
 
             try {
@@ -229,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 2. Delete Comment (Owner only)
+        // Delete Comment (Owner Only)
         const deleteBtn = commentCard.querySelector(".delete-btn");
         if (deleteBtn) {
             deleteBtn.addEventListener("click", async () => {
@@ -243,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // 3. Edit Comment (Owner only)
+        // Edit Comment (Owner Only)
         const editBtn = commentCard.querySelector(".edit-btn");
         const commentTextEl = commentCard.querySelector(".comment-text");
         if (editBtn) {
@@ -280,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // 4. Reply Box Toggle & Submission
+        // Reply Box Toggle & Submission
         const replyBtn = commentCard.querySelector(".reply-btn");
         replyBtn.addEventListener("click", () => {
             if (commentCard.querySelector(".inline-reply-box")) return;
@@ -325,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Load real-time replies with full Like, Edit, and Delete support
+    // Load real-time replies with strict owner check for Edit/Delete
     function loadReplies(commentId, repliesContainer) {
         const repliesQuery = query(collection(db, `comments/${commentId}/replies`), orderBy("createdAt", "asc"));
         
@@ -338,7 +375,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const replyAuthor = replyData.name || "Anonymous";
                 const currentUser = getCurrentUser();
 
-                const isReplyOwner = currentUser && replyAuthor.toLowerCase() === currentUser.toLowerCase();
+                // Strict Reply Ownership Verification
+                const isReplyOwner = currentUser && replyAuthor.trim().toLowerCase() === currentUser.trim().toLowerCase();
+                const replyTimeAgo = formatTimeAgo(replyData.createdAt);
 
                 const replyCard = document.createElement("div");
                 replyCard.classList.add("reply-card");
@@ -347,13 +386,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 replyCard.innerHTML = `
                     <div class="reply-header">
                         <span><strong>${escapeHtml(replyAuthor)}</strong></span>
-                        <span class="reply-date">Just now</span>
+                        <span class="reply-date">${replyTimeAgo}</span>
                     </div>
                     <p class="reply-text">${escapeHtml(replyBody)}</p>
                     <div class="comment-actions" style="margin-top: 5px;">
                         <button class="reply-like-btn"><i class="fa-regular fa-heart"></i> <span>${replyData.likes || 0}</span></button>
-                        ${isReplyOwner ? `<button class="reply-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
-                        <button class="reply-delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                        ${isReplyOwner ? `
+                            <button class="reply-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button class="reply-delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
+                        ` : ''}
                     </div>
                 `;
                 repliesContainer.appendChild(replyCard);
@@ -379,7 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 });
 
-                // Reply Delete
+                // Reply Delete (Owner Only)
                 const replyDeleteBtn = replyCard.querySelector(".reply-delete-btn");
                 if (replyDeleteBtn) {
                     replyDeleteBtn.addEventListener("click", async () => {
@@ -393,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
 
-                // Reply Edit
+                // Reply Edit (Owner Only)
                 const replyEditBtn = replyCard.querySelector(".reply-edit-btn");
                 const replyTextEl = replyCard.querySelector(".reply-text");
                 if (replyEditBtn) {
