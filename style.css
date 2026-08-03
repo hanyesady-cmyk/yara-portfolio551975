@@ -254,6 +254,18 @@ nav ul li a:hover, nav ul li a.active{
     font-size: 15px;
 }
 
+/* === تأثير ظهور المحتوى تدريجياً وقت السكرول === */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(35px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.reveal-on-scroll.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* SKILLS SECTION */
 .skills-container{
     display: grid;
@@ -268,7 +280,7 @@ nav ul li a:hover, nav ul li a.active{
     border: 1px solid var(--border-color);
     text-align: center;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-    transition: 0.3s;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 .skill-card:hover{
@@ -299,7 +311,7 @@ nav ul li a:hover, nav ul li a.active{
     flex-direction: column;
     padding: 20px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
-    transition: 0.3s;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 .project-card:hover{
@@ -387,7 +399,6 @@ nav ul li a:hover, nav ul li a.active{
     background: rgba(239, 68, 68, 0.05);
 }
 
-/* الكلاس اللي بيتفعل وقت الضغط (أحمر ونطّة) */
 .liked, .liked-heart {
     color: #ef4444 !important;
     border-color: #ef4444 !important;
