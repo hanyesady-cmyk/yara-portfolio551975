@@ -30,8 +30,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
-    // --- 1. Scroll Reveal Animation using IntersectionObserver ---
-    const selectors = '.skill-card, .project-card, .comment-card, .contact-container, .section-title';
+    // --- 1. Scroll Reveal Animation (Static Elements Only) ---
+    const selectors = '.skill-card, .project-card, .contact-container, .section-title';
     const elementsToReveal = document.querySelectorAll(selectors);
 
     elementsToReveal.forEach(el => {
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- 2. General Like Buttons Toggle UI ---
     document.addEventListener('click', (e) => {
-        const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
+        const likeButton = e.target.closest('.like-btn, .comment-like-btn, .reply-like-btn');
         if (likeButton) {
             likeButton.classList.toggle('liked');
             const icon = likeButton.querySelector("i");
@@ -127,15 +127,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const icon = likeBtn.querySelector("i");
         const projectRef = doc(db, "projects_likes", projectId);
 
+        // جلب عدد اللايكات الحالي من فايربيز أول ما الصفحة تفتح
         getDoc(projectRef).then((docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (span) span.textContent = `${data.likes || 0} Likes`;
+            } else {
+                if (span) span.textContent = `0 Likes`;
             }
-        }).catch(err => console.error(err));
+        }).catch(err => console.error("Error fetching project likes:", err));
 
+        // التعامل مع الضغط على زرار اللايك وحفظه في فايربيز
         likeBtn.addEventListener("click", async () => {
-            const isLiked = likeBtn.classList.contains("liked");
+            const isLiked = likeBtn.classList.toggle("liked");
+            if (icon) {
+                icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+            }
+
             let currentLikes = parseInt(span ? span.textContent : 0) || 0;
             let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
             
@@ -195,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const commentId = docSnap.id;
                 
                 const commentCard = document.createElement("div");
-                commentCard.classList.add("comment-card", "reveal-on-scroll", "active");
+                commentCard.classList.add("comment-card");
                 commentCard.setAttribute("data-id", commentId);
                 
                 commentCard.innerHTML = `
@@ -360,32 +368,4 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
-});document.addEventListener("DOMContentLoaded", () => {
-    // 1. تفعيل ظهور الكروت والمحتوى تدريجياً أثناء السكرول بأمان
-    const selectors = '.skill-card, .project-card, .comment-card, .contact-container, .section-title';
-    const elementsToReveal = document.querySelectorAll(selectors);
-
-    elementsToReveal.forEach(el => {
-        el.classList.add('reveal-on-scroll');
-    });
-
-    const scrollObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-            }
-        });
-    }, { threshold: 0.1 });
-
-    elementsToReveal.forEach(el => {
-        scrollObserver.observe(el);
-    });
-
-    // 2. تفعيل تحول زرار اللايك للأحمر ونطه عند الضغط عليه
-    document.addEventListener('click', (e) => {
-        const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
-        if (likeButton) {
-            likeButton.classList.toggle('liked');
-        }
-    });
 });
