@@ -1,15 +1,15 @@
-\@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --bg-main: #f4f6f9;
-    --bg-gradient: linear-gradient(135deg, #f4f6f9 0%, #e9edf2 50%, #f4f6f9 100%);
-    --card-bg: #ffffff;
-    --border-color: #d1d5db;
-    --text-main: #1f2937;
-    --text-muted: #4b5563;
-    --purple: #7c3aed;
-    --blue: #2563eb;
-    --cyan: #0891b2;
+    --bg-main: #0d0d12;
+    --bg-gradient: linear-gradient(135deg, #0d0d12 0%, #161325 50%, #0d0d12 100%);
+    --card-bg: rgba(26, 26, 36, 0.85);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-main: #ffffff;
+    --text-muted: #a0a0b0;
+    --purple: #8a2be2;
+    --blue: #1e90ff;
+    --cyan: #00ffff;
 }
 
 *{
@@ -44,7 +44,7 @@ header{
     padding: 18px 8%;
     display: flex;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.85);
+    background-color: rgba(13, 13, 18, 0.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
 }
@@ -60,7 +60,6 @@ nav{
     font-size: 24px;
     font-weight: 800;
     letter-spacing: -0.5px;
-    color: var(--text-main);
 }
 
 .logo span{
@@ -87,7 +86,7 @@ nav ul li a{
 }
 
 nav ul li a:hover, nav ul li a.active{
-    color: var(--purple);
+    color: var(--cyan);
 }
 
 .right-nav button{
@@ -95,7 +94,7 @@ nav ul li a:hover, nav ul li a.active{
     border: 2px solid var(--purple);
     border-radius: 20px;
     background: transparent;
-    color: var(--purple);
+    color: var(--text-main);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -104,7 +103,7 @@ nav ul li a:hover, nav ul li a.active{
 
 .right-nav button:hover{
     background: var(--purple);
-    color: #ffffff;
+    border-color: var(--purple);
 }
 
 #menuBtn{
@@ -131,7 +130,6 @@ nav ul li a:hover, nav ul li a.active{
     font-weight: 800;
     line-height: 1.1;
     margin-bottom: 15px;
-    color: var(--text-main);
 }
 
 .content h2{
@@ -162,13 +160,12 @@ nav ul li a:hover, nav ul li a.active{
 
 .btn{
     background: var(--purple);
-    color: #ffffff;
+    color: var(--text-main);
     border: 2px solid var(--purple);
 }
 
 .btn:hover{
     background: transparent;
-    color: var(--purple);
 }
 
 .btn2{
@@ -178,8 +175,8 @@ nav ul li a:hover, nav ul li a.active{
 }
 
 .btn2:hover{
-    border-color: var(--purple);
-    color: var(--purple);
+    border-color: var(--cyan);
+    color: var(--cyan);
 }
 
 .image img{
@@ -187,7 +184,7 @@ nav ul li a:hover, nav ul li a.active{
     max-width: 400px;
     height: auto;
     border-radius: 50%;
-    box-shadow: 0 15px 35px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 15px 35px rgba(0, 255, 255, 0.15);
 }
 
 /* SECTIONS DESIGN & ANIMATION */
@@ -228,21 +225,21 @@ nav ul li a:hover, nav ul li a.active{
     padding: 30px;
     border-radius: 16px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
     transition: 0.3s;
 }
 
 .skill-card:hover{
     transform: translateY(-5px);
-    border-color: var(--purple);
-    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.1);
+    border-color: var(--cyan);
+    box-shadow: 0 10px 25px rgba(0, 255, 255, 0.1);
 }
 
-.skill-card i{ font-size: 30px; color: var(--purple); margin-bottom: 15px; }
+.skill-card i{ font-size: 30px; color: var(--cyan); margin-bottom: 15px; }
 .skill-card h3{ font-size: 18px; margin-bottom: 10px; color: var(--text-main); }
 .skill-card p{ font-size: 14px; color: var(--text-muted); line-height: 1.6; }
 
-/* PROJECTS SECTION (تم ضبط الكاردز والفيديوهات بدقة تامة لتجنب أي طرد أو تداخل) */
+/* PROJECTS SECTION (تم ضبط الكاردز والفيديوهات والصور بدقة تامة) */
 .projects-container{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -254,7 +251,7 @@ nav ul li a:hover, nav ul li a.active{
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
     transition: 0.3s;
     display: flex;
     flex-direction: column;
@@ -263,7 +260,7 @@ nav ul li a:hover, nav ul li a.active{
 .project-card:hover{
     transform: translateY(-6px);
     border-color: var(--purple);
-    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 12px 30px rgba(138, 43, 226, 0.2);
 }
 
 .project-image-container {
@@ -271,7 +268,7 @@ nav ul li a:hover, nav ul li a.active{
     height: 220px;
     overflow: hidden;
     position: relative;
-    background: #e5e7eb;
+    background: #000;
 }
 
 .project-image-container img, 
@@ -312,7 +309,7 @@ nav ul li a:hover, nav ul li a.active{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #f9fafb;
+    background: rgba(0,0,0,0.15);
 }
 
 .project-like {
@@ -330,12 +327,12 @@ nav ul li a:hover, nav ul li a.active{
 }
 
 .project-like:hover {
-    border-color: #ef4444;
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.05);
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+    background: rgba(255, 77, 77, 0.05);
 }
 
-.project-like i { color: #ef4444; }
+.project-like i { color: #ff4d4d; }
 
 /* COMMENTS SYSTEM */
 .comment-form {
@@ -348,12 +345,12 @@ nav ul li a:hover, nav ul li a.active{
     padding: 30px;
     border-radius: 16px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
 }
 
 .comment-form input, .comment-form textarea{
     padding: 15px;
-    background: #f9fafb;
+    background: rgba(13, 13, 18, 0.6);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     color: var(--text-main);
@@ -364,8 +361,7 @@ nav ul li a:hover, nav ul li a.active{
 
 .comment-form input:focus, .comment-form textarea:focus{
     border-color: var(--purple);
-    box-shadow: 0 0 10px rgba(124, 58, 237, 0.15);
-    background: #ffffff;
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
 }
 
 .comment-form textarea{ height: 110px; resize: none; }
@@ -374,7 +370,7 @@ nav ul li a:hover, nav ul li a.active{
     align-self: flex-start;
     padding: 12px 30px;
     background: var(--purple);
-    color: #ffffff;
+    color: var(--text-main);
     border: none;
     border-radius: 25px;
     cursor: pointer;
@@ -385,7 +381,7 @@ nav ul li a:hover, nav ul li a.active{
 .btn-submit:hover {
     background: transparent;
     border: 2px solid var(--purple);
-    color: var(--purple);
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
 }
 
 .comments-container {
@@ -401,12 +397,12 @@ nav ul li a:hover, nav ul li a.active{
     padding: 22px;
     border-radius: 14px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
     transition: 0.3s;
 }
 
 .comment-card:hover {
-    border-color: var(--purple);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .comment-header {
@@ -431,7 +427,7 @@ nav ul li a:hover, nav ul li a.active{
     justify-content: center;
     align-items: center;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--text-main);
     font-size: 16px;
 }
 
@@ -453,11 +449,11 @@ nav ul li a:hover, nav ul li a.active{
     transition: 0.3s;
 }
 
-.edit-btn { color: var(--blue); }
-.delete-btn { color: #ef4444; }
+.edit-btn { color: var(--cyan); }
+.delete-btn { color: #ff4d4d; }
 
-.edit-btn:hover { text-decoration: underline; }
-.delete-btn:hover { text-decoration: underline; }
+.edit-btn:hover { color: #fff; text-shadow: 0 0 8px var(--cyan); }
+.delete-btn:hover { color: #fff; text-shadow: 0 0 8px #ff4d4d; }
 
 /* RESPONSIVE */
 @media(max-width: 768px){
@@ -467,14 +463,13 @@ nav ul li a:hover, nav ul li a.active{
         top: 80px;
         left: 0;
         width: 100%;
-        background-color: #ffffff;
+        background-color: var(--bg-main);
         flex-direction: column;
         gap: 20px;
         padding: 30px 0;
         clip-path: circle(0% at 50% 0%);
         transition: 0.5s;
         border-bottom: 1px solid var(--border-color);
-        box-shadow: 0 10px 15px rgba(0,0,0,0.05);
     }
     nav ul.active{
         clip-path: circle(100% at 50% 50%);
