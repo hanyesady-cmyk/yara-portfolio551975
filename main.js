@@ -395,6 +395,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function escapeHTML(str) {
     if (!str) return "";
+    // تفعيل تحول زرار اللايك للأحمر مع الحركة عند الضغط عليه
+document.addEventListener('click', (e) => {
+    const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
+    if (likeButton) {
+        likeButton.classList.toggle('liked');
+    }
+});
     return str.replace(/[&<>'"]/g, tag => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
     }[tag] || tag));
