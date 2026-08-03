@@ -30,7 +30,43 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
-    // --- 1. Mobile Menu Toggle ---
+    // --- 1. Scroll Reveal Animation using IntersectionObserver ---
+    const selectors = '.skill-card, .project-card, .comment-card, .contact-container, .section-title';
+    const elementsToReveal = document.querySelectorAll(selectors);
+
+    elementsToReveal.forEach(el => {
+        el.classList.add('reveal-on-scroll');
+    });
+
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    elementsToReveal.forEach(el => {
+        scrollObserver.observe(el);
+    });
+
+    // --- 2. General Like Buttons Toggle UI ---
+    document.addEventListener('click', (e) => {
+        const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
+        if (likeButton) {
+            likeButton.classList.toggle('liked');
+            const icon = likeButton.querySelector("i");
+            if (icon) {
+                if (likeButton.classList.contains("liked")) {
+                    icon.className = "fa-solid fa-heart";
+                } else {
+                    icon.className = "fa-regular fa-heart";
+                }
+            }
+        }
+    });
+
+    // --- 3. Mobile Menu Toggle ---
     const menuBtn = document.getElementById("menuBtn");
     const navUl = document.querySelector("nav ul");
 
@@ -48,24 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 2. Scroll Reveal Animation ---
-    const revealElements = document.querySelectorAll(".reveal-on-scroll");
-
-    const revealOnScroll = () => {
-        const windowHeight = window.innerHeight;
-        revealElements.forEach(el => {
-            const elementTop = el.getBoundingClientRect().top;
-            const elementVisible = 150;
-            if (elementTop < windowHeight - elementVisible) {
-                el.classList.add("active");
-            }
-        });
-    };
-
-    window.addEventListener("scroll", revealOnScroll);
-    revealOnScroll();
-
-    // --- 3. Video Modal Functionality ---
+    // --- 4. Video Modal Functionality ---
     const videoModal = document.getElementById("videoModal");
     const modalVideo = document.getElementById("modalVideo");
     const closeBtn = document.querySelector(".close-btn");
@@ -98,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 4. Project Likes from Firebase (Global for all users) ---
+    // --- 5. Project Likes from Firebase (Global for all users) ---
     document.querySelectorAll(".project-card").forEach((card, index) => {
         const projectId = `project_${index + 1}`;
         const likeBtn = card.querySelector(".project-like");
@@ -108,21 +127,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const icon = likeBtn.querySelector("i");
         const projectRef = doc(db, "projects_likes", projectId);
 
-        // Fetch initial likes from Firebase
         getDoc(projectRef).then((docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                span.textContent = `${data.likes || 0} Likes`;
+                if (span) span.textContent = `${data.likes || 0} Likes`;
             }
         }).catch(err => console.error(err));
 
         likeBtn.addEventListener("click", async () => {
-            const isLiked = likeBtn.classList.toggle("liked");
-            let currentLikes = parseInt(span.textContent) || 0;
+            const isLiked = likeBtn.classList.contains("liked");
+            let currentLikes = parseInt(span ? span.textContent : 0) || 0;
             let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
             
-            span.textContent = `${newLikes} Likes`;
-            icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+            if (span) span.textContent = `${newLikes} Likes`;
 
             try {
                 await setDoc(projectRef, { likes: newLikes }, { merge: true });
@@ -132,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // --- 5. Firebase Real-time Comments & Replies System ---
+    // --- 6. Firebase Real-time Comments & Replies System ---
     const commentForm = document.getElementById("commentForm");
     const commentsContainer = document.getElementById("commentsContainer");
 
@@ -178,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const commentId = docSnap.id;
                 
                 const commentCard = document.createElement("div");
-                commentCard.classList.add("comment-card");
+                commentCard.classList.add("comment-card", "reveal-on-scroll", "active");
                 commentCard.setAttribute("data-id", commentId);
                 
                 commentCard.innerHTML = `
@@ -213,15 +230,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const likeBtn = commentCard.querySelector(".comment-like-btn");
         likeBtn.addEventListener("click", async () => {
-            const isLiked = likeBtn.classList.toggle("liked");
-            const icon = likeBtn.querySelector("i");
+            const isLiked = likeBtn.classList.contains("liked");
             const span = likeBtn.querySelector("span");
             
             let currentLikes = parseInt(span.textContent) || 0;
             let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
             span.textContent = newLikes;
-
-            icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
 
             try {
                 await updateDoc(commentRef, { likes: newLikes });
@@ -346,4 +360,32 @@ document.addEventListener("DOMContentLoaded", () => {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+});document.addEventListener("DOMContentLoaded", () => {
+    // 1. تفعيل ظهور الكروت والمحتوى تدريجياً أثناء السكرول بأمان
+    const selectors = '.skill-card, .project-card, .comment-card, .contact-container, .section-title';
+    const elementsToReveal = document.querySelectorAll(selectors);
+
+    elementsToReveal.forEach(el => {
+        el.classList.add('reveal-on-scroll');
+    });
+
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    elementsToReveal.forEach(el => {
+        scrollObserver.observe(el);
+    });
+
+    // 2. تفعيل تحول زرار اللايك للأحمر ونطه عند الضغط عليه
+    document.addEventListener('click', (e) => {
+        const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
+        if (likeButton) {
+            likeButton.classList.toggle('liked');
+        }
+    });
 });
