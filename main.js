@@ -406,3 +406,32 @@ document.addEventListener('click', (e) => {
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
     }[tag] || tag));
 }
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. تفعيل ظهور الكروت والمحتوى تدريجياً أثناء السكرول بأمان
+    const selectors = '.skill-card, .project-card, .comment-card, .contact-container, .section-title';
+    const elementsToReveal = document.querySelectorAll(selectors);
+
+    elementsToReveal.forEach(el => {
+        el.classList.add('reveal-on-scroll');
+    });
+
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    elementsToReveal.forEach(el => {
+        scrollObserver.observe(el);
+    });
+
+    // 2. تفعيل تحول زرار اللايك للأحمر ونطه عند الضغط عليه
+    document.addEventListener('click', (e) => {
+        const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
+        if (likeButton) {
+            likeButton.classList.toggle('liked');
+        }
+    });
+});
