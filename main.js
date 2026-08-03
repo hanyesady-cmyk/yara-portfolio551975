@@ -41,7 +41,7 @@ if (menuBtn) {
 
 // Scroll Reveal Animation (Intersection Observer)
 const observerOptions = {
-    threshold: 0.15
+    threshold: 0.1
 };
 
 const observer = new IntersectionObserver((entries, observer) => {
@@ -73,31 +73,43 @@ window.closeVideo = function() {
     modal.classList.remove('active');
 };
 
-// Project Likes Handling (Local/Storage + State)
+// Project Likes Handling via Firebase (Real-time sync)
 const projectLikes = document.querySelectorAll('.project-like');
 projectLikes.forEach(button => {
     const projectId = button.getAttribute('data-id');
     const likesSpan = button.querySelector('.project-likes');
     
-    let storedLikes = localStorage.getItem(`like_${projectId}`) || 0;
-    likesSpan.textContent = storedLikes;
-    if (localStorage.getItem(`liked_${projectId}`)) {
-        button.classList.add('liked');
-    }
-
-    button.addEventListener('click', () => {
-        let currentLikes = parseInt(likesSpan.textContent);
-        if (!button.classList.contains('liked')) {
-            currentLikes++;
-            button.classList.add('liked');
-            localStorage.setItem(`liked_${projectId}`, 'true');
+    // Listen to project likes in real-time from Firestore collection "projects_likes"
+    const projectRef = doc(db, "projects_likes", projectId);
+    
+    onSnapshot(projectRef, (docSnap) => {
+        if (docSnap.exists()) {
+            likesSpan.textContent = docSnap.data().likes || 0;
         } else {
-            currentLikes--;
-            button.classList.remove('liked');
-            localStorage.removeItem(`liked_${projectId}`);
+            // Initialize if not exists
+            likesSpan.textContent = 0;
         }
-        likesSpan.textContent = currentLikes;
-        localStorage.setItem(`like_${projectId}`, currentLikes);
+    }, (error) => {
+        console.log("Project likes sync info: ", error);
+    });
+
+    button.addEventListener('click', async () => {
+        try {
+            const snap = await getDoc(projectRef);
+            let currentLikes = 0;
+            if (snap.exists()) {
+                currentLikes = snap.data().likes || 0;
+                await updateDoc(projectRef, { likes: currentLikes + 1 });
+            } else {
+                // Import setDoc dynamically if needed or handle creation
+                import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async ({ setDoc }) => {
+                    await setDoc(projectRef, { likes: 1 });
+                });
+            }
+            button.classList.add('liked');
+        } catch (error) {
+            console.error("Error updating project like: ", error);
+        }
     });
 });
 
@@ -123,58 +135,78 @@ if (commentForm) {
                 commentForm.reset();
             } catch (error) {
                 console.error("Error adding comment: ", error);
+                alert("Could not post comment. Check Firebase Firestore Rules.");
             }
         }
     });
 }
 
 // Real-time Comments & Likes Fetching from Firebase
-const q = query(collection(db, "comments"), orderBy("timestamp", "desc"));
-onSnapshot(q, (snapshot) => {
-    commentsContainer.innerHTML = '';
-    snapshot.forEach((docSnap) => {
-        const commentData = docSnap.data();
-        const commentId = docSnap.id;
+try {
+    const q = query(collection(db, "comments"), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+        if (!commentsContainer) return;
+        commentsContainer.innerHTML = '';
         
-        const commentCard = document.createElement('div');
-        commentCard.className = 'comment-card scroll-reveal active';
-        
-        const initial = commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U';
-        const dateStr = commentData.timestamp ? new Date(commentData.timestamp.toDate()).toLocaleDateString() : 'Just now';
+        if (snapshot.empty) {
+            commentsContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No comments yet. Be the first to comment!</p>';
+            return;
+        }
 
-        commentCard.innerHTML = `
-            <div class="comment-header">
-                <div class="comment-user-info">
-                    <div class="avatar">${initial}</div>
-                    <div class="comment-info">
-                        <h3>${escapeHtml(commentData.name)}</h3>
-                        <span class="comment-date">${dateStr}</span>
+        snapshot.forEach((docSnap) => {
+            const commentData = docSnap.data();
+            const commentId = docSnap.id;
+            
+            const commentCard = document.createElement('div');
+            commentCard.className = 'comment-card scroll-reveal active';
+            
+            const initial = commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U';
+            let dateStr = 'Just now';
+            if (commentData.timestamp && commentData.timestamp.toDate) {
+                dateStr = commentData.timestamp.toDate().toLocaleDateString();
+            }
+
+            commentCard.innerHTML = `
+                <div class="comment-header">
+                    <div class="comment-user-info">
+                        <div class="avatar">${initial}</div>
+                        <div class="comment-info">
+                            <h3>${escapeHtml(commentData.name)}</h3>
+                            <span class="comment-date">${dateStr}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <p class="comment-text">${escapeHtml(commentData.message)}</p>
-            <div class="comment-actions">
-                <button class="comment-like-btn" onclick="likeComment('${commentId}', ${commentData.likes || 0})">
-                    ❤️ <span>${commentData.likes || 0}</span>
-                </button>
-                <button class="reply-btn" onclick="toggleReplyBox('${commentId}')"><i class="fa-solid fa-reply"></i> Reply</button>
-                <button class="delete-btn" onclick="deleteComment('${commentId}')"><i class="fa-solid fa-trash"></i> Delete</button>
-            </div>
-            <div id="reply-box-${commentId}" style="display:none;" class="inline-reply-box">
-                <input type="text" id="reply-name-${commentId}" placeholder="Your Name" required>
-                <textarea id="reply-msg-${commentId}" placeholder="Write a reply..." required></textarea>
-                <div>
-                    <button class="submit-reply-btn" onclick="submitReply('${commentId}')">Post Reply</button>
-                    <button class="cancel-reply-btn" onclick="toggleReplyBox('${commentId}')">Cancel</button>
+                <p class="comment-text">${escapeHtml(commentData.message)}</p>
+                <div class="comment-actions">
+                    <button class="comment-like-btn" onclick="likeComment('${commentId}', ${commentData.likes || 0})">
+                        ❤️ <span>${commentData.likes || 0}</span>
+                    </button>
+                    <button class="reply-btn" onclick="toggleReplyBox('${commentId}')"><i class="fa-solid fa-reply"></i> Reply</button>
+                    <button class="delete-btn" onclick="deleteComment('${commentId}')"><i class="fa-solid fa-trash"></i> Delete</button>
                 </div>
-            </div>
-            <div class="replies-container" id="replies-${commentId}">
-                ${renderReplies(commentData.replies || [])}
-            </div>
-        `;
-        commentsContainer.appendChild(commentCard);
+                <div id="reply-box-${commentId}" style="display:none;" class="inline-reply-box">
+                    <input type="text" id="reply-name-${commentId}" placeholder="Your Name" required>
+                    <textarea id="reply-msg-${commentId}" placeholder="Write a reply..." required></textarea>
+                    <div>
+                        <button class="submit-reply-btn" onclick="submitReply('${commentId}')">Post Reply</button>
+                        <button class="cancel-reply-btn" onclick="toggleReplyBox('${commentId}')">Cancel</button>
+                    </div>
+                </div>
+                <div class="replies-container" id="replies-${commentId}">
+                    ${renderReplies(commentData.replies || [])}
+                </div>
+            `;
+            commentsContainer.appendChild(commentCard);
+        });
+    }, (error) => {
+        console.error("Firestore snapshot error: ", error);
+        if(commentsContainer) {
+            commentsContainer.innerHTML = '<p style="text-align:center; color:red;">Failed to load comments. Please check Firebase Firestore Rules.</p>';
+        }
     });
-});
+} catch (err) {
+    console.error("Comments initialization error: ", err);
+}
 
 window.likeComment = async function(commentId, currentLikes) {
     const commentRef = doc(db, "comments", commentId);
@@ -199,12 +231,16 @@ window.deleteComment = async function(commentId) {
 
 window.toggleReplyBox = function(commentId) {
     const box = document.getElementById(`reply-box-${commentId}`);
-    box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+    if (box) {
+        box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+    }
 };
 
 window.submitReply = async function(commentId) {
     const nameInput = document.getElementById(`reply-name-${commentId}`);
     const msgInput = document.getElementById(`reply-msg-${commentId}`);
+    if (!nameInput || !msgInput) return;
+    
     const name = nameInput.value.trim();
     const message = msgInput.value.trim();
 
