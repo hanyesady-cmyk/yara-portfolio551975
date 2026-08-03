@@ -15,7 +15,6 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// Firebase Config الخاصة بمشروعك
 const firebaseConfig = {
     apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
     authDomain: "ga-for-windows-99879.firebaseapp.com",
@@ -29,9 +28,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
-    // ==========================================
     // 1. MOBILE MENU TOGGLE
-    // ==========================================
     const menuBtn = document.getElementById('menuBtn');
     const navUl = document.querySelector('nav ul');
 
@@ -49,9 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ==========================================
     // 2. SCROLL ACTIVE LINK
-    // ==========================================
     const sections = document.querySelectorAll("section");
     const navLinks = document.querySelectorAll("nav ul li a");
 
@@ -72,9 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ==========================================
     // 3. PROJECT LIKES & FIREBASE SYNC
-    // ==========================================
     async function initializeProjects() {
         document.querySelectorAll(".project-like").forEach(async (button) => {
             const id = button.dataset.id;
@@ -111,9 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ==========================================
     // 4. COMMENTS SYSTEM (Firebase + Edit/Delete Same Device)
-    // ==========================================
     let deviceId = localStorage.getItem('portfolio_device_id');
     if (!deviceId) {
         deviceId = 'dev_' + Math.random().toString(36).substring(2, 15);
@@ -187,9 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ==========================================
 // 5. GLOBAL FUNCTIONS FOR EDIT & DELETE
-// ==========================================
 window.deleteComment = async function(commentId, commentDeviceId) {
     let currentDeviceId = localStorage.getItem('portfolio_device_id');
     if (commentDeviceId !== currentDeviceId) {
@@ -230,7 +219,6 @@ window.editComment = async function(commentId, commentDeviceId) {
     }
 };
 
-// Helper to prevent XSS
 function escapeHTML(str) {
     if (!str) return "";
     return str.replace(/[&<>'"]/g, 
