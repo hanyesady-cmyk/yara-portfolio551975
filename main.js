@@ -26,22 +26,26 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Set Footer Year
-document.getElementById('year').textContent = new Date().getFullYear();
+const yearEl = document.getElementById('year');
+if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+}
 
 // Mobile Menu Toggle
 const menuBtn = document.getElementById('menuBtn');
 const navLinks = document.getElementById('navLinks');
 
-if (menuBtn) {
+if (menuBtn && navLinks) {
     menuBtn.addEventListener('click', () => {
         navLinks.classList.toggle('active');
         menuBtn.classList.toggle('fa-xmark');
     });
 }
 
-// Scroll Reveal Animation (Intersection Observer)
+// Scroll Reveal Animation (Intersection Observer) for smooth scroll appearance
 const observerOptions = {
-    threshold: 0.1
+    threshold: 0.1,
+    rootMargin: "0px 0px -50px 0px"
 };
 
 const observer = new IntersectionObserver((entries, observer) => {
@@ -60,55 +64,71 @@ document.querySelectorAll('.scroll-reveal').forEach(el => {
 window.openVideo = function(videoSrc) {
     const modal = document.getElementById('videoModal');
     const player = document.getElementById('videoPlayer');
-    player.src = videoSrc;
-    modal.classList.add('active');
-    player.play();
+    if (modal && player) {
+        player.src = videoSrc;
+        modal.classList.add('active');
+        player.play();
+    }
 };
 
 window.closeVideo = function() {
     const modal = document.getElementById('videoModal');
     const player = document.getElementById('videoPlayer');
-    player.pause();
-    player.src = '';
-    modal.classList.remove('active');
+    if (modal && player) {
+        player.pause();
+        player.src = '';
+        modal.classList.remove('active');
+    }
 };
 
-// Project Likes Handling via Firebase (Real-time sync)
+// Project Likes Handling (LocalStorage + Firebase sync to prevent disappearing on refresh)
 const projectLikes = document.querySelectorAll('.project-like');
-projectLikes.forEach(button => {
-    const projectId = button.getAttribute('data-id');
+projectLikes.forEach((button, index) => {
+    const projectId = button.getAttribute('data-id') || `project-${index + 1}`;
     const likesSpan = button.querySelector('.project-likes');
     
-    // Listen to project likes in real-time from Firestore collection "projects_likes"
-    const projectRef = doc(db, "projects_likes", projectId);
+    if (!likesSpan) return;
+
+    // Load initial state from LocalStorage for instant rendering
+    const localLikes = localStorage.getItem(`like_${projectId}`);
+    const isLikedLocally = localStorage.getItem(`liked_${projectId}`);
     
-    onSnapshot(projectRef, (docSnap) => {
-        if (docSnap.exists()) {
-            likesSpan.textContent = docSnap.data().likes || 0;
-        } else {
-            // Initialize if not exists
-            likesSpan.textContent = 0;
-        }
-    }, (error) => {
-        console.log("Project likes sync info: ", error);
-    });
+    if (localLikes !== null) {
+        likesSpan.textContent = localLikes;
+    }
+    if (isLikedLocally) {
+        button.classList.add('liked');
+    }
 
     button.addEventListener('click', async () => {
+        let currentLikes = parseInt(likesSpan.textContent) || 0;
+        
+        if (!button.classList.contains('liked')) {
+            currentLikes++;
+            button.classList.add('liked');
+            localStorage.setItem(`liked_${projectId}`, 'true');
+        } else {
+            currentLikes--;
+            button.classList.remove('liked');
+            localStorage.removeItem(`liked_${projectId}`);
+        }
+        
+        likesSpan.textContent = currentLikes;
+        localStorage.setItem(`like_${projectId}`, currentLikes);
+
+        // Sync with Firebase in the background
         try {
+            const projectRef = doc(db, "projects_likes", projectId);
             const snap = await getDoc(projectRef);
-            let currentLikes = 0;
             if (snap.exists()) {
-                currentLikes = snap.data().likes || 0;
-                await updateDoc(projectRef, { likes: currentLikes + 1 });
+                await updateDoc(projectRef, { likes: currentLikes });
             } else {
-                // Import setDoc dynamically if needed or handle creation
                 import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async ({ setDoc }) => {
-                    await setDoc(projectRef, { likes: 1 });
+                    await setDoc(projectRef, { likes: currentLikes });
                 });
             }
-            button.classList.add('liked');
-        } catch (error) {
-            console.error("Error updating project like: ", error);
+        } catch (e) {
+            console.log("Firebase background sync note: saved locally.");
         }
     });
 });
@@ -120,8 +140,13 @@ const commentsContainer = document.getElementById('commentsContainer');
 if (commentForm) {
     commentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const name = document.getElementById('commentName').value.trim();
-        const message = document.getElementById('commentMessage').value.trim();
+        const nameInput = document.getElementById('commentName');
+        const msgInput = document.getElementById('commentMessage');
+        
+        if (!nameInput || !msgInput) return;
+        
+        const name = nameInput.value.trim();
+        const message = msgInput.value.trim();
 
         if (name && message) {
             try {
@@ -135,13 +160,13 @@ if (commentForm) {
                 commentForm.reset();
             } catch (error) {
                 console.error("Error adding comment: ", error);
-                alert("Could not post comment. Check Firebase Firestore Rules.");
+                alert("Could not post comment. Please check Firebase Firestore Rules.");
             }
         }
     });
 }
 
-// Real-time Comments & Likes Fetching from Firebase
+// Real-time Comments Fetching from Firebase
 try {
     const q = query(collection(db, "comments"), orderBy("timestamp", "desc"));
     onSnapshot(q, (snapshot) => {
@@ -149,7 +174,7 @@ try {
         commentsContainer.innerHTML = '';
         
         if (snapshot.empty) {
-            commentsContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted);">No comments yet. Be the first to comment!</p>';
+            commentsContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted, #777); padding: 20px;">No comments yet. Be the first to comment!</p>';
             return;
         }
 
