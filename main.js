@@ -3,25 +3,23 @@ import {
     getFirestore, 
     collection, 
     addDoc, 
-    getDocs, 
+    getDoc,
     doc, 
     updateDoc, 
     deleteDoc, 
-    increment, 
     serverTimestamp, 
     query, 
     orderBy, 
     onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// TODO: Replace with your actual Firebase configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
+    authDomain: "ga-for-windows-99879.firebaseapp.com",
+    projectId: "ga-for-windows-99879",
+    storageBucket: "ga-for-windows-99879.firebasestorage.app",
+    messagingSenderId: "590172219222",
+    appId: "1:590172219222:web:0202ac673e26a56c1a58f7"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -41,6 +39,23 @@ if (menuBtn) {
     });
 }
 
+// Scroll Reveal Animation (Intersection Observer)
+const observerOptions = {
+    threshold: 0.15
+};
+
+const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.scroll-reveal').forEach(el => {
+    observer.observe(el);
+});
+
 // Video Modal Logic
 window.openVideo = function(videoSrc) {
     const modal = document.getElementById('videoModal');
@@ -58,13 +73,12 @@ window.closeVideo = function() {
     modal.classList.remove('active');
 };
 
-// Project Likes Handling
+// Project Likes Handling (Local/Storage + State)
 const projectLikes = document.querySelectorAll('.project-like');
 projectLikes.forEach(button => {
     const projectId = button.getAttribute('data-id');
     const likesSpan = button.querySelector('.project-likes');
     
-    // Load local storage initial count if available
     let storedLikes = localStorage.getItem(`like_${projectId}`) || 0;
     likesSpan.textContent = storedLikes;
     if (localStorage.getItem(`liked_${projectId}`)) {
@@ -87,7 +101,7 @@ projectLikes.forEach(button => {
     });
 });
 
-// Firebase Comments & Replies Logic
+// Firebase Comments Form Submission
 const commentForm = document.getElementById('commentForm');
 const commentsContainer = document.getElementById('commentsContainer');
 
@@ -114,7 +128,7 @@ if (commentForm) {
     });
 }
 
-// Real-time Comments Fetching
+// Real-time Comments & Likes Fetching from Firebase
 const q = query(collection(db, "comments"), orderBy("timestamp", "desc"));
 onSnapshot(q, (snapshot) => {
     commentsContainer.innerHTML = '';
@@ -123,7 +137,7 @@ onSnapshot(q, (snapshot) => {
         const commentId = docSnap.id;
         
         const commentCard = document.createElement('div');
-        commentCard.className = 'comment-card';
+        commentCard.className = 'comment-card scroll-reveal active';
         
         const initial = commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U';
         const dateStr = commentData.timestamp ? new Date(commentData.timestamp.toDate()).toLocaleDateString() : 'Just now';
@@ -155,7 +169,7 @@ onSnapshot(q, (snapshot) => {
                 </div>
             </div>
             <div class="replies-container" id="replies-${commentId}">
-                ${renderReplies(commentData.replies || [], commentId)}
+                ${renderReplies(commentData.replies || [])}
             </div>
         `;
         commentsContainer.appendChild(commentCard);
@@ -197,23 +211,20 @@ window.submitReply = async function(commentId) {
     if (name && message) {
         try {
             const commentRef = doc(db, "comments", commentId);
-            const commentSnap = await getDocs(collection(db, "comments")); // or target specific doc
-            // To properly append to array in Firestore:
-            const targetDoc = docSnap => docSnap.id === commentId;
-            // Simplified fetch & update for replies array:
-            // Fetch current document data first
-            import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async ({ getDoc }) => {
-                const snap = await getDoc(commentRef);
-                if (snap.exists()) {
-                    const data = snap.data();
-                    const replies = data.replies || [];
-                    replies.push({ name, message, date: new Date().toLocaleDateString() });
-                    await updateDoc(commentRef, { replies });
-                    nameInput.value = '';
-                    msgInput.value = '';
-                    document.getElementById(`reply-box-${commentId}`).style.display = 'none';
-                }
-            });
+            const snap = await getDoc(commentRef);
+            if (snap.exists()) {
+                const data = snap.data();
+                const replies = data.replies || [];
+                replies.push({ 
+                    name: name, 
+                    message: message, 
+                    date: new Date().toLocaleDateString() 
+                });
+                await updateDoc(commentRef, { replies });
+                nameInput.value = '';
+                msgInput.value = '';
+                document.getElementById(`reply-box-${commentId}`).style.display = 'none';
+            }
         } catch (error) {
             console.error("Error adding reply: ", error);
         }
