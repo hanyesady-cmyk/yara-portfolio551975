@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Toggle YouTube-style Inline Reply Box (English UI)
+        // Toggle YouTube-style Inline Reply Box (Guaranteed English Placeholders & Buttons)
         const replyBtn = e.target.closest('.reply-btn');
         if (replyBtn) {
             const commentId = replyBtn.dataset.id;
@@ -337,10 +337,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             boxContainer.innerHTML = `
                 <div class="inline-reply-box" style="margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
-                    <input type="text" id="replyName_${commentId}" placeholder="Your Name" required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none;">
-                    <textarea id="replyMsg_${commentId}" placeholder="Write your reply..." required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; height: 50px; resize: none; outline: none;"></textarea>
+                    <input type="text" id="replyName_${commentId}" placeholder="Your Name" required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #fff; color: #000; direction: ltr; text-align: left;">
+                    <textarea id="replyMsg_${commentId}" placeholder="Write your reply..." required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; height: 50px; resize: none; outline: none; background: #fff; color: #000; direction: ltr; text-align: left;"></textarea>
                     <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                        <button type="button" class="cancel-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: #e2e8f0; border: none; cursor: pointer;">Cancel</button>
+                        <button type="button" class="cancel-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: #e2e8f0; color: #000; border: none; cursor: pointer;">Cancel</button>
                         <button type="button" class="submit-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: var(--purple); color: white; border: none; cursor: pointer;">Post Reply</button>
                     </div>
                 </div>
