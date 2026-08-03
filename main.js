@@ -1,437 +1,346 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import {
-    getFirestore,
-    collection,
-    doc,
-    addDoc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    deleteDoc,
-    increment,
-    serverTimestamp,
-    query,
-    orderBy,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+// Import Firebase SDK v10 (Modular / ESM)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    doc, 
+    updateDoc, 
+    deleteDoc, 
+    onSnapshot, 
+    query, 
+    orderBy, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// TODO: استبدل بيانات الإعدادات دي ببيانات مشروعك الحقيقي من Firebase Console
 const firebaseConfig = {
-    apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
-    authDomain: "ga-for-windows-99879.firebaseapp.com",
-    projectId: "ga-for-windows-99879",
-    storageBucket: "ga-for-windows-99879.firebasestorage.app",
-    messagingSenderId: "590172219222",
-    appId: "1:590172219222:web:0202ac673e26a56c1a58f7"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Global Video Modal Functions
-window.openVideo = function(videoUrl) {
-    const modal = document.getElementById('videoModal');
-    const player = document.getElementById('videoPlayer');
-    if (modal && player) {
-        player.src = videoUrl;
-        modal.classList.add('active');
-        player.play();
-    }
-};
-
-window.closeVideo = function() {
-    const modal = document.getElementById('videoModal');
-    const player = document.getElementById('videoPlayer');
-    if (modal && player) {
-        player.pause();
-        player.src = "";
-        modal.classList.remove('active');
-    }
-};
-
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Footer Year
-    const yearSpan = document.getElementById('year');
-    if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+    // --- 1. Mobile Menu Toggle ---
+    const menuBtn = document.getElementById("menuBtn");
+    const navUl = document.querySelector("nav ul");
 
-    // 2. Mobile Menu Toggle
-    const menuBtn = document.getElementById('menuBtn');
-    const navLinks = document.getElementById('navLinks');
-    if (menuBtn && navLinks) {
-        menuBtn.addEventListener('click', () => navLinks.classList.toggle('active'));
-    }
-
-    // 3. Device ID Management
-    let deviceId = localStorage.getItem('portfolio_device_id');
-    if (!deviceId) {
-        deviceId = 'dev_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('portfolio_device_id', deviceId);
-    }
-
-    // 4. Projects Likes Initialization & Sync
-    document.querySelectorAll(".project-like").forEach(async (button) => {
-        const id = button.dataset.id;
-        if (!id) return;
-        const ref = doc(db, "projects", id);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
-            await setDoc(ref, { likes: 0 });
-        }
-    });
-
-    onSnapshot(collection(db, "projects"), (snapshot) => {
-        snapshot.forEach(project => {
-            const data = project.data();
-            const likeSpan = document.querySelector(`[data-id="${project.id}"] .project-likes`);
-            if (likeSpan) likeSpan.textContent = data.likes || 0;
+    if (menuBtn && navUl) {
+        menuBtn.addEventListener("click", () => {
+            navUl.classList.toggle("active");
+            menuBtn.classList.toggle("fa-times");
         });
-    });
 
-    // 5. Comments Form Submission
-    const commentsRef = collection(db, "comments");
-    const commentForm = document.getElementById('commentForm');
-    const commentsContainer = document.getElementById('commentsContainer');
-    const commentName = document.getElementById('commentName');
-    const commentMessage = document.getElementById('commentMessage');
-
-    if (commentForm) {
-        commentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!commentName.value.trim() || !commentMessage.value.trim()) return;
-
-            try {
-                await addDoc(commentsRef, {
-                    deviceId: deviceId,
-                    name: commentName.value.trim(),
-                    message: commentMessage.value.trim(),
-                    likes: 0,
-                    likedBy: [],
-                    replies: [],
-                    createdAt: serverTimestamp()
-                });
-                commentForm.reset();
-            } catch (error) {
-                console.error("Error adding comment: ", error);
-            }
-        });
-    }
-
-    // 6. Render Comments Dynamically with Clear Reply & Like Separation
-    if (commentsContainer) {
-        onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
-            commentsContainer.innerHTML = "";
-            if (snapshot.empty) {
-                commentsContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 14px;">No comments yet.</p>`;
-                return;
-            }
-
-            snapshot.forEach(commentDoc => {
-                const data = commentDoc.data();
-                const id = commentDoc.id;
-                const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
-                const isCommentOwner = (data.deviceId === deviceId);
-                const commentLikes = data.likes || 0;
-
-                let repliesHTML = '';
-                if (data.replies && data.replies.length > 0) {
-                    repliesHTML = '<div class="replies-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px; padding-left: 15px; border-left: 2px solid var(--border-color);">';
-                    data.replies.forEach((reply, rIndex) => {
-                        const replyLikes = reply.likes || 0;
-                        const isReplyOwner = true; 
-                        
-                        repliesHTML += `
-                            <div class="reply-card" data-reply-index="${rIndex}" style="background: rgba(0,0,0,0.02); padding: 10px 12px; border-radius: 8px; font-size: 13px; border: 1px solid rgba(0,0,0,0.04);">
-                                <div class="reply-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <span style="font-size: 12px;"><b>${escapeHTML(reply.name || "User")}</b></span>
-                                    <span style="display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--text-muted);">
-                                        ${reply.date || ""}
-                                        ${isReplyOwner ? `
-                                            <button class="edit-reply-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-size:11px; font-weight:600;">Edit</button>
-                                            <button class="delete-reply-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:11px; font-weight:600;">Delete</button>
-                                        ` : ''}
-                                    </span>
-                                </div>
-                                <div class="reply-text" id="reply-text-${id}-${rIndex}" style="margin-bottom: 8px; color: var(--text-color);">${escapeHTML(reply.message || "")}</div>
-                                
-                                <!-- فصل واضح بخط صغير بين نص الريبلاي وزرار اللايف الخاص به -->
-                                <div class="comment-actions" style="display: flex; align-items: center; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 6px; margin-top: 4px;">
-                                    <button class="action-btn reply-like-btn" data-comment-id="${id}" data-reply-index="${rIndex}" style="background: none; border: none; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px;">
-                                        ❤️ <span>${replyLikes}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    repliesHTML += '</div>';
-                }
-
-                const card = document.createElement('div');
-                card.className = 'comment-card';
-                card.innerHTML = `
-                    <div class="comment-header">
-                        <div class="comment-user-info">
-                            <div class="avatar">${(data.name || "U").charAt(0).toUpperCase()}</div>
-                            <div class="comment-info">
-                                <h3>${escapeHTML(data.name || "Anonymous")}</h3>
-                                <span class="comment-date">${dateStr}</span>
-                            </div>
-                        </div>
-                        <div class="comment-actions">
-                            ${isCommentOwner ? `
-                                <button class="edit-btn" data-id="${id}">Edit</button>
-                                <button class="delete-btn" data-id="${id}">Delete</button>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <p class="comment-text" id="comment-text-${id}" style="margin-bottom: 12px;">${escapeHTML(data.message || "")}</p>
-                    
-                    <div style="border-top: 1px solid var(--border-color); margin-top: 14px; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-                        <button class="action-btn comment-like-btn" data-id="${id}" style="background: none; border: none; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px;">
-                            ❤️ <span>${commentLikes}</span>
-                        </button>
-                        <button class="reply-btn" data-id="${id}" style="background: none; border: none; color: var(--blue); cursor: pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                            ↩ Reply
-                        </button>
-                    </div>
-                    
-                    <div id="reply-box-${id}"></div>
-                    ${repliesHTML}
-                `;
-                commentsContainer.appendChild(card);
+        document.querySelectorAll("nav ul li a").forEach(link => {
+            link.addEventListener("click", () => {
+                navUl.classList.remove("active");
+                if (menuBtn) menuBtn.classList.remove("fa-times");
             });
         });
     }
 
-    // 7. Global Event Delegation
-    document.addEventListener('click', async (e) => {
-        // Project Likes
-        const likeBtn = e.target.closest('.project-like');
-        if (likeBtn) {
-            const projectId = likeBtn.dataset.id;
-            if (!projectId) return;
-            const storageKey = `liked_${projectId}`;
-            if (localStorage.getItem(storageKey)) {
-                alert("You already liked this project ❤️");
-                return;
-            }
-            try {
-                await updateDoc(doc(db, "projects", projectId), { likes: increment(1) });
-                localStorage.setItem(storageKey, "true");
-            } catch (err) { console.error(err); }
-        }
+    // --- 2. Scroll Reveal Animation ---
+    const revealElements = document.querySelectorAll(".reveal-on-scroll");
 
-        // Comment Like
-        const cLikeBtn = e.target.closest('.comment-like-btn');
-        if (cLikeBtn) {
-            const commentId = cLikeBtn.dataset.id;
-            const ref = doc(db, "comments", commentId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const commentData = snap.data();
-                const likedBy = commentData.likedBy || [];
-                if (likedBy.includes(deviceId)) {
-                    alert("You already liked this comment ❤️");
-                    return;
-                }
-                try {
-                    await updateDoc(ref, {
-                        likes: increment(1),
-                        likedBy: [...likedBy, deviceId]
-                    });
-                } catch (err) { console.error(err); }
-            }
-        }
-
-        // Reply Like
-        const rLikeBtn = e.target.closest('.reply-like-btn');
-        if (rLikeBtn) {
-            const commentId = rLikeBtn.dataset.commentId;
-            const rIndex = parseInt(rLikeBtn.dataset.replyIndex);
-            const ref = doc(db, "comments", commentId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const data = snap.data();
-                let replies = data.replies || [];
-                if (replies[rIndex]) {
-                    const rLikedBy = replies[rIndex].likedBy || [];
-                    if (rLikedBy.includes(deviceId)) {
-                        alert("You already liked this reply ❤️");
-                        return;
-                    }
-                    replies[rIndex].likes = (replies[rIndex].likes || 0) + 1;
-                    replies[rIndex].likedBy = [...rLikedBy, deviceId];
-                    try {
-                        await updateDoc(ref, { replies: replies });
-                    } catch (err) { console.error(err); }
-                }
-            }
-        }
-
-        // Delete Comment
-        const deleteBtn = e.target.closest('.delete-btn');
-        if (deleteBtn) {
-            const commentId = deleteBtn.dataset.id;
-            if (confirm("Are you sure you want to delete this comment?")) {
-                try { await deleteDoc(doc(db, "comments", commentId)); } catch (err) { console.error(err); }
-            }
-        }
-
-        // Edit Comment
-        const editBtn = e.target.closest('.edit-btn');
-        if (editBtn) {
-            const commentId = editBtn.dataset.id;
-            const textEl = document.getElementById(`comment-text-${commentId}`);
-            const currentText = textEl ? textEl.textContent : "";
-            let newText = prompt("Edit your comment:", currentText);
-            if (newText !== null && newText.trim() !== "") {
-                try { await updateDoc(doc(db, "comments", commentId), { message: newText.trim() }); } catch (err) { console.error(err); }
-            }
-        }
-
-        // Delete Reply
-        const deleteReplyBtn = e.target.closest('.delete-reply-btn');
-        if (deleteReplyBtn) {
-            const commentId = deleteReplyBtn.dataset.commentId;
-            const rIndex = parseInt(deleteReplyBtn.dataset.replyIndex);
-            if (confirm("Are you sure you want to delete this reply?")) {
-                const ref = doc(db, "comments", commentId);
-                const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    let replies = snap.data().replies || [];
-                    replies.splice(rIndex, 1);
-                    try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
-                }
-            }
-        }
-
-        // Edit Reply
-        const editReplyBtn = e.target.closest('.edit-reply-btn');
-        if (editReplyBtn) {
-            const commentId = editReplyBtn.dataset.commentId;
-            const rIndex = parseInt(editReplyBtn.dataset.replyIndex);
-            const ref = doc(db, "comments", commentId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                let replies = snap.data().replies || [];
-                if (replies[rIndex]) {
-                    let newMsg = prompt("Edit your reply:", replies[rIndex].message);
-                    if (newMsg !== null && newMsg.trim() !== "") {
-                        replies[rIndex].message = newMsg.trim();
-                        replies[rIndex].deviceId = deviceId;
-                        try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
-                    }
-                }
-            }
-        }
-
-        // Toggle YouTube-style Inline Reply Box
-        const replyBtn = e.target.closest('.reply-btn');
-        if (replyBtn) {
-            const commentId = replyBtn.dataset.id;
-            const boxContainer = document.getElementById(`reply-box-${commentId}`);
-            
-            if (boxContainer.innerHTML.trim() !== "") {
-                boxContainer.innerHTML = "";
-                return;
-            }
-
-            document.querySelectorAll('[id^="reply-box-"]').forEach(el => el.innerHTML = "");
-
-            boxContainer.innerHTML = `
-                <div class="inline-reply-box" style="margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
-                    <input type="text" id="replyName_${commentId}" placeholder="Your Name" required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #fff; color: #000; direction: ltr; text-align: left;">
-                    <textarea id="replyMsg_${commentId}" placeholder="Write your reply..." required style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; height: 50px; resize: none; outline: none; background: #fff; color: #000; direction: ltr; text-align: left;"></textarea>
-                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                        <button type="button" class="cancel-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: #e2e8f0; color: #000; border: none; cursor: pointer;">Cancel</button>
-                        <button type="button" class="submit-reply-btn" data-id="${commentId}" style="padding: 4px 10px; border-radius: 10px; font-size: 11px; background: var(--purple); color: white; border: none; cursor: pointer;">Post Reply</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Cancel Reply
-        const cancelBtn = e.target.closest('.cancel-reply-btn');
-        if (cancelBtn) {
-            const commentId = cancelBtn.dataset.id;
-            document.getElementById(`reply-box-${commentId}`).innerHTML = "";
-        }
-
-        // Submit Reply with Device ID
-        const submitReplyBtn = e.target.closest('.submit-reply-btn');
-        if (submitReplyBtn) {
-            const commentId = submitReplyBtn.dataset.id;
-            const nameInput = document.getElementById(`replyName_${commentId}`);
-            const msgInput = document.getElementById(`replyMsg_${commentId}`);
-
-            if (!nameInput.value.trim() || !msgInput.value.trim()) {
-                alert("Please fill in your name and reply message!");
-                return;
-            }
-
-            const ref = doc(db, "comments", commentId);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const currentReplies = snap.data().replies || [];
-                const newReply = {
-                    deviceId: deviceId,
-                    name: nameInput.value.trim(),
-                    message: msgInput.value.trim(),
-                    date: new Date().toLocaleDateString(),
-                    likes: 0,
-                    likedBy: []
-                };
-
-                try {
-                    await updateDoc(ref, {
-                        replies: [...currentReplies, newReply]
-                    });
-                    document.getElementById(`reply-box-${commentId}`).innerHTML = "";
-                } catch (err) {
-                    console.error("Error adding reply:", err);
-                }
-            }
-        }
-    });
-});
-
-function escapeHTML(str) {
-    if (!str) return "";
-    // تفعيل تحول زرار اللايك للأحمر مع الحركة عند الضغط عليه
-document.addEventListener('click', (e) => {
-    const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
-    if (likeButton) {
-        likeButton.classList.toggle('liked');
-    }
-});
-    return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-    }[tag] || tag));
-}
-document.addEventListener("DOMContentLoaded", () => {
-    // 1. تفعيل ظهور الكروت والمحتوى تدريجياً أثناء السكرول بأمان
-    const selectors = '.skill-card, .project-card, .comment-card, .contact-container, .section-title';
-    const elementsToReveal = document.querySelectorAll(selectors);
-
-    elementsToReveal.forEach(el => {
-        el.classList.add('reveal-on-scroll');
-    });
-
-    const scrollObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
+    const revealOnScroll = () => {
+        const windowHeight = window.innerHeight;
+        revealElements.forEach(el => {
+            const elementTop = el.getBoundingClientRect().top;
+            const elementVisible = 150;
+            if (elementTop < windowHeight - elementVisible) {
+                el.classList.add("active");
             }
         });
-    }, { threshold: 0.1 });
+    };
 
-    elementsToReveal.forEach(el => {
-        scrollObserver.observe(el);
+    window.addEventListener("scroll", revealOnScroll);
+    revealOnScroll();
+
+    // --- 3. Video Modal Functionality ---
+    const videoModal = document.getElementById("videoModal");
+    const modalVideo = document.getElementById("modalVideo");
+    const closeBtn = document.querySelector(".close-btn");
+
+    document.querySelectorAll(".play-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const card = e.target.closest(".project-card");
+            const videoSource = card.querySelector("source") ? card.querySelector("source").src : card.querySelector("video").src;
+            
+            if (videoModal && modalVideo) {
+                modalVideo.src = videoSource;
+                videoModal.classList.add("active");
+                modalVideo.play();
+            }
+        });
     });
 
-    // 2. تفعيل تحول زرار اللايك للأحمر ونطه عند الضغط عليه
-    document.addEventListener('click', (e) => {
-        const likeButton = e.target.closest('.like-btn, .project-like, .comment-like-btn, .reply-like-btn');
-        if (likeButton) {
-            likeButton.classList.toggle('liked');
+    const closeModal = () => {
+        if (videoModal && modalVideo) {
+            videoModal.classList.remove("active");
+            modalVideo.pause();
+            modalVideo.src = "";
         }
+    };
+
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (videoModal) {
+        videoModal.addEventListener("click", (e) => {
+            if (e.target === videoModal) closeModal();
+        });
+    }
+
+    // --- 4. General Like Buttons (e.g., Projects) ---
+    document.querySelectorAll(".project-like").forEach(btn => {
+        btn.addEventListener("click", function() {
+            this.classList.toggle("liked");
+            const icon = this.querySelector("i");
+            const span = this.querySelector("span");
+
+            if (this.classList.contains("liked")) {
+                if (icon) icon.className = "fa-solid fa-heart";
+                if (span) span.textContent = parseInt(span.textContent || 0) + 1;
+            } else {
+                if (icon) icon.className = "fa-regular fa-heart";
+                if (span) span.textContent = Math.max(0, parseInt(span.textContent || 1) - 1);
+            }
+        });
     });
+
+    // --- 5. Firebase Real-time Comments & Replies System ---
+    const commentForm = document.getElementById("commentForm");
+    const commentsContainer = document.getElementById("commentsContainer");
+
+    if (commentForm && commentsContainer) {
+        // إرسال تعليق جديد إلى فايربيز
+        commentForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById("commentName");
+            const textInput = document.getElementById("commentText");
+
+            if (!nameInput || !textInput) return;
+
+            const name = nameInput.value.trim();
+            const text = textInput.value.trim();
+
+            if (name === "" || text === "") return;
+
+            try {
+                await addDoc(collection(db, "comments"), {
+                    name: name,
+                    text: text,
+                    likes: 0,
+                    createdAt: serverTimestamp()
+                });
+                nameInput.value = "";
+                textInput.value = "";
+            } catch (error) {
+                console.error("Error adding comment: ", error);
+                alert("حدث خطأ أثناء إرسال التعليق، تأكد من ضبط إعدادات فايربيز وسلاح الصلاحيات (Firestore Rules).");
+            }
+        });
+
+        // جلب التعليقات وعرضها بشكل لحظي (Real-time listener)
+        const q = query(collection(db, "comments"), orderBy("createdAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            commentsContainer.innerHTML = "";
+            
+            if (snapshot.empty) {
+                commentsContainer.innerHTML = `<p style="text-align:center; color: var(--text-muted); font-size: 14px;">لا توجد تعليقات حتى الآن. كن أول من يعلق!</p>`;
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const commentData = docSnap.data();
+                const commentId = docSnap.id;
+                
+                const commentCard = document.createElement("div");
+                commentCard.classList.add("comment-card");
+                commentCard.setAttribute("data-id", commentId);
+                
+                commentCard.innerHTML = `
+                    <div class="comment-header">
+                        <div class="comment-user-info">
+                            <div class="avatar">${commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U'}</div>
+                            <div class="comment-info">
+                                <h3>${escapeHtml(commentData.name)}</h3>
+                                <span class="comment-date">منذ قليل</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="comment-text">${escapeHtml(commentData.text)}</p>
+                    <div class="comment-actions">
+                        <button class="comment-like-btn"><i class="fa-regular fa-heart"></i> <span>${commentData.likes || 0}</span></button>
+                        <button class="reply-btn"><i class="fa-solid fa-reply"></i> رد</button>
+                        <button class="edit-btn"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> حذف</button>
+                    </div>
+                    <div class="replies-container"></div>
+                `;
+
+                commentsContainer.appendChild(commentCard);
+                attachFirestoreCommentEvents(commentCard, commentId);
+                loadReplies(commentId, commentCard.querySelector(".replies-container"));
+            });
+        });
+    }
+
+    // ربط تفاعلات التعليق (لايك، تعديل، حذف، رد) بقاعدة بيانات فايربيز
+    function attachFirestoreCommentEvents(commentCard, commentId) {
+        const commentRef = doc(db, "comments", commentId);
+
+        // 1. لايك التعليق
+        const likeBtn = commentCard.querySelector(".comment-like-btn");
+        likeBtn.addEventListener("click", async () => {
+            const isLiked = likeBtn.classList.toggle("liked");
+            const icon = likeBtn.querySelector("i");
+            const span = likeBtn.querySelector("span");
+            
+            let currentLikes = parseInt(span.textContent) || 0;
+            let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+            span.textContent = newLikes;
+
+            if (isLiked) {
+                icon.className = "fa-solid fa-heart";
+            } else {
+                icon.className = "fa-regular fa-heart";
+            }
+
+            try {
+                await updateDoc(commentRef, { likes: newLikes });
+            } catch (err) {
+                console.error("Error updating likes:", err);
+            }
+        });
+
+        // 2. حذف التعليق
+        const deleteBtn = commentCard.querySelector(".delete-btn");
+        deleteBtn.addEventListener("click", async () => {
+            if (confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
+                try {
+                    await deleteDoc(commentRef);
+                } catch (err) {
+                    console.error("Error deleting comment:", err);
+                }
+            }
+        });
+
+        // 3. تعديل التعليق
+        const editBtn = commentCard.querySelector(".edit-btn");
+        const commentTextEl = commentCard.querySelector(".comment-text");
+        editBtn.addEventListener("click", () => {
+            if (commentCard.querySelector(".inline-edit-box")) return;
+
+            const editBox = document.createElement("div");
+            editBox.classList.add("inline-edit-box");
+            editBox.innerHTML = `
+                <textarea>${commentTextEl.textContent}</textarea>
+                <div style="display: flex; gap: 8px;">
+                    <button class="submit-btn-action save-edit">حفظ</button>
+                    <button class="cancel-btn cancel-edit">إلغاء</button>
+                </div>
+            `;
+            commentCard.appendChild(editBox);
+
+            editBox.querySelector(".save-edit").addEventListener("click", async () => {
+                const newText = editBox.querySelector("textarea").value.trim();
+                if (newText !== "") {
+                    try {
+                        await updateDoc(commentRef, { text: newText });
+                        commentTextEl.textContent = newText;
+                    } catch (err) {
+                        console.error("Error updating text:", err);
+                    }
+                }
+                editBox.remove();
+            });
+
+            editBox.querySelector(".cancel-edit").addEventListener("click", () => {
+                editBox.remove();
+            });
+        });
+
+        // 4. زر إضافة رد
+        const replyBtn = commentCard.querySelector(".reply-btn");
+        const repliesContainer = commentCard.querySelector(".replies-container");
+        replyBtn.addEventListener("click", () => {
+            if (commentCard.querySelector(".inline-reply-box")) return;
+
+            const replyBox = document.createElement("div");
+            replyBox.classList.add("inline-reply-box");
+            replyBox.innerHTML = `
+                <input type="text" placeholder="اسمك الكريم..." class="reply-name-input">
+                <textarea placeholder="اكتب ردك هنا..."></textarea>
+                <div style="display: flex; gap: 8px;">
+                    <button class="submit-btn-action send-reply">إرسال الرد</button>
+                    <button class="cancel-btn cancel-reply">إلغاء</button>
+                </div>
+            `;
+            commentCard.appendChild(replyBox);
+
+            replyBox.querySelector(".send-reply").addEventListener("click", async () => {
+                const rName = replyBox.querySelector(".reply-name-input").value.trim();
+                const rText = replyBox.querySelector("textarea").value.trim();
+
+                if (rName !== "" && rText !== "") {
+                    try {
+                        await addDoc(collection(db, `comments/${commentId}/replies`), {
+                            name: rName,
+                            text: rText,
+                            createdAt: serverTimestamp()
+                        });
+                        replyBox.remove();
+                    } catch (err) {
+                        console.error("Error adding reply:", err);
+                    }
+                }
+            });
+
+            replyBox.querySelector(".cancel-reply").addEventListener("click", () => {
+                replyBox.remove();
+            });
+        });
+    }
+
+    // جلب الردود الخاصة بكل تعليق بشكل لحظي
+    function loadReplies(commentId, repliesContainer) {
+        const repliesQuery = query(collection(db, `comments/${commentId}/replies`), orderBy("createdAt", "asc"));
+        
+        onSnapshot(repliesQuery, (snapshot) => {
+            repliesContainer.innerHTML = "";
+            snapshot.forEach((replySnap) => {
+                const replyData = replySnap.data();
+                
+                const replyCard = document.createElement("div");
+                replyCard.classList.add("reply-card");
+                replyCard.innerHTML = `
+                    <div class="reply-header">
+                        <span><strong>${escapeHtml(replyData.name)}</strong></span>
+                        <span>منذ قليل</span>
+                    </div>
+                    <p class="reply-text">${escapeHtml(replyData.text)}</p>
+                `;
+                repliesContainer.appendChild(replyCard);
+            });
+        });
+    }
+
+    // دالة أمان لمنع الثغرات
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 });
