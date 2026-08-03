@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Edit Comment (Inline or Prompt-less Style / Clean Prompt)
+        // Edit Comment
         const editBtn = e.target.closest('.edit-btn');
         if (editBtn) {
             const commentId = editBtn.dataset.id;
@@ -369,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (snap.exists()) {
                 const currentReplies = snap.data().replies || [];
                 const newReply = {
-                    deviceId: deviceId, // حماية الرد لجهاز اليوزر فقط
+                    deviceId: deviceId,
                     name: nameInput.value.trim(),
                     message: msgInput.value.trim(),
                     date: new Date().toLocaleDateString(),
