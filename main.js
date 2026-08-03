@@ -96,20 +96,46 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 4. General Like Buttons (Projects) ---
-    document.querySelectorAll(".project-like").forEach(btn => {
-        btn.addEventListener("click", function() {
-            this.classList.toggle("liked");
-            const icon = this.querySelector("i");
-            const span = this.querySelector("span");
+    // --- 4. Original Project Likes (Local Storage) ---
+    document.querySelectorAll(".project-card").forEach((card, index) => {
+        const likeBtn = card.querySelector(".project-like");
+        if (!likeBtn) return;
 
-            if (this.classList.contains("liked")) {
-                if (icon) icon.className = "fa-solid fa-heart";
-                if (span) span.textContent = parseInt(span.textContent || 0) + 1;
-            } else {
+        const span = likeBtn.querySelector("span");
+        const icon = likeBtn.querySelector("i");
+        const storageKey = `project_likes_${index}`;
+        const likedKey = `project_liked_${index}`;
+
+        // Load saved likes from localStorage
+        const savedLikes = localStorage.getItem(storageKey);
+        const isLiked = localStorage.getItem(likedKey) === "true";
+
+        if (savedLikes !== null) {
+            span.textContent = `${savedLikes} Likes`;
+        }
+        
+        if (isLiked) {
+            likeBtn.classList.add("liked");
+            if (icon) icon.className = "fa-solid fa-heart";
+        }
+
+        likeBtn.addEventListener("click", () => {
+            let currentLikes = parseInt(span.textContent) || 0;
+            
+            if (likeBtn.classList.contains("liked")) {
+                likeBtn.classList.remove("liked");
                 if (icon) icon.className = "fa-regular fa-heart";
-                if (span) span.textContent = Math.max(0, parseInt(span.textContent || 1) - 1);
+                currentLikes = Math.max(0, currentLikes - 1);
+                localStorage.setItem(likedKey, "false");
+            } else {
+                likeBtn.classList.add("liked");
+                if (icon) icon.className = "fa-solid fa-heart";
+                currentLikes += 1;
+                localStorage.setItem(likedKey, "true");
             }
+
+            span.textContent = `${currentLikes} Likes`;
+            localStorage.setItem(storageKey, currentLikes);
         });
     });
 
