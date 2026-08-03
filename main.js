@@ -8,8 +8,6 @@ import {
     updateDoc, 
     deleteDoc, 
     serverTimestamp, 
-    query, 
-    orderBy, 
     onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -42,7 +40,7 @@ if (menuBtn && navLinks) {
     });
 }
 
-// Scroll Reveal Animation (Intersection Observer) for smooth scroll appearance
+// Scroll Reveal Animation (Intersection Observer)
 const observerOptions = {
     threshold: 0.1,
     rootMargin: "0px 0px -50px 0px"
@@ -81,15 +79,15 @@ window.closeVideo = function() {
     }
 };
 
-// Project Likes Handling (LocalStorage + Firebase sync to prevent disappearing on refresh)
+// Project Likes Handling (LocalStorage + Firebase sync)
 const projectLikes = document.querySelectorAll('.project-like');
-projectLikes.forEach((button, index) => {
-    const projectId = button.getAttribute('data-id') || `project-${index + 1}`;
+projectLikes.forEach((button) => {
+    const projectId = button.getAttribute('data-id');
     const likesSpan = button.querySelector('.project-likes');
     
-    if (!likesSpan) return;
+    if (!likesSpan || !projectId) return;
 
-    // Load initial state from LocalStorage for instant rendering
+    // Load from LocalStorage for instant stable display
     const localLikes = localStorage.getItem(`like_${projectId}`);
     const isLikedLocally = localStorage.getItem(`liked_${projectId}`);
     
@@ -116,7 +114,7 @@ projectLikes.forEach((button, index) => {
         likesSpan.textContent = currentLikes;
         localStorage.setItem(`like_${projectId}`, currentLikes);
 
-        // Sync with Firebase in the background
+        // Background sync to Firebase
         try {
             const projectRef = doc(db, "projects_likes", projectId);
             const snap = await getDoc(projectRef);
@@ -128,7 +126,7 @@ projectLikes.forEach((button, index) => {
                 });
             }
         } catch (e) {
-            console.log("Firebase background sync note: saved locally.");
+            console.log("Firebase sync background note: saved locally.");
         }
     });
 });
@@ -166,15 +164,15 @@ if (commentForm) {
     });
 }
 
-// Real-time Comments Fetching from Firebase
+// Real-time Comments Fetching (Reads all comments without restrictive sorting to ensure old ones appear)
 try {
-    const q = query(collection(db, "comments"), orderBy("timestamp", "desc"));
-    onSnapshot(q, (snapshot) => {
+    const commentsRef = collection(db, "comments");
+    onSnapshot(commentsRef, (snapshot) => {
         if (!commentsContainer) return;
         commentsContainer.innerHTML = '';
         
         if (snapshot.empty) {
-            commentsContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted, #777); padding: 20px;">No comments yet. Be the first to comment!</p>';
+            commentsContainer.innerHTML = '<p style="text-align:center; color:#777; padding: 20px;">No comments yet. Be the first to comment!</p>';
             return;
         }
 
@@ -186,7 +184,7 @@ try {
             commentCard.className = 'comment-card scroll-reveal active';
             
             const initial = commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U';
-            let dateStr = 'Just now';
+            let dateStr = 'Recent';
             if (commentData.timestamp && commentData.timestamp.toDate) {
                 dateStr = commentData.timestamp.toDate().toLocaleDateString();
             }
