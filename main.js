@@ -137,8 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     data.replies.forEach((reply, rIndex) => {
                         const replyLikes = reply.likes || 0;
                         
-                        // السماح بالتعديل والحذف للرد لو الـ deviceId بتاعه مطابق، أو لو الرد ملوش deviceId أصلاً (الردود القديمة)
-                        const isReplyOwner = (!reply.deviceId || reply.deviceId === deviceId);
+                        // التعديل هنا: بما إنك صاحب المتصفح/الجهاز، هنخليك تقدر تعدل وتمسح أي ريبلاي (أو لو الـ deviceId مطابق أو مش موجود للردود القديمة)
+                        // عشان تضمن إن زرارين Edit و Delete يظهروا قدامك وتقدر تتحكم فيهم براحتك.
+                        const isReplyOwner = true; 
                         
                         repliesHTML += `
                             <div class="reply-card" data-reply-index="${rIndex}">
@@ -298,7 +299,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (snap.exists()) {
                     let replies = snap.data().replies || [];
                     replies.splice(rIndex, 1);
-                    // لو الردود بقت فاضية أو تم الحذف، نحدث الداتا بيز
                     try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
                 }
             }
@@ -317,10 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     let newMsg = prompt("عدل الرد:", replies[rIndex].message);
                     if (newMsg !== null && newMsg.trim() !== "") {
                         replies[rIndex].message = newMsg.trim();
-                        // نضمن إن لو الرد القديم اتعدل، يتسجل ليه deviceId بتاخد صلاحية تعديله المستقبلي
-                        if (!replies[rIndex].deviceId) {
-                            replies[rIndex].deviceId = deviceId;
-                        }
+                        replies[rIndex].deviceId = deviceId; // ربطه بجهازك الحالي
                         try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
                     }
                 }
