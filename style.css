@@ -254,18 +254,6 @@ nav ul li a:hover, nav ul li a.active{
     font-size: 15px;
 }
 
-/* === انيميشن ظهور المحتوى عند السكرول (Scroll Reveal Animation) === */
-.skill-card, .project-card, .comment-card, .contact-container {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.skill-card.show, .project-card.show, .comment-card.show, .contact-container.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
 /* SKILLS SECTION */
 .skills-container{
     display: grid;
@@ -280,6 +268,7 @@ nav ul li a:hover, nav ul li a.active{
     border: 1px solid var(--border-color);
     text-align: center;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    transition: 0.3s;
 }
 
 .skill-card:hover{
@@ -310,9 +299,11 @@ nav ul li a:hover, nav ul li a.active{
     flex-direction: column;
     padding: 20px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+    transition: 0.3s;
 }
 
 .project-card:hover{
+    transform: translateY(-5px);
     border-color: var(--purple);
     box-shadow: 0 12px 30px rgba(124, 58, 237, 0.12);
 }
@@ -369,7 +360,7 @@ nav ul li a:hover, nav ul li a.active{
 .project-card h3{ font-size: 18px; color: var(--text-main); margin-bottom: 8px; }
 .project-card p{ font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px; flex-grow: 1; }
 
-/* === زرار اللاف الرمادي اللي بينط ويبقى أحمر === */
+/* === زرار اللاف (رمادي -> أحمر مع نطّة) === */
 @keyframes heartBounce {
     0% { transform: scale(1); }
     50% { transform: scale(1.3); }
@@ -379,7 +370,7 @@ nav ul li a:hover, nav ul li a.active{
 .like-btn, .project-like, .comment-like-btn, .reply-like-btn {
     background: #f8fafc;
     border: 1px solid var(--border-color);
-    color: #94a3b8; /* رمادي شيك */
+    color: #94a3b8; /* رمادي شيك في البداية */
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
@@ -396,7 +387,7 @@ nav ul li a:hover, nav ul li a.active{
     background: rgba(239, 68, 68, 0.05);
 }
 
-/* الكلاس اللي هيتضاف وقت ما المستخدم يدوس لايك (أحمر + نطّة) */
+/* الكلاس اللي بيتفعل وقت الضغط (أحمر ونطّة) */
 .liked, .liked-heart {
     color: #ef4444 !important;
     border-color: #ef4444 !important;
