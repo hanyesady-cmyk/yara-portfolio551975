@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const commentsContainer = document.getElementById("commentsContainer");
 
     if (commentForm && commentsContainer) {
-        // Submit new comment to Firebase
+        // Submit new comment to Firebase with correct field names
         commentForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("commentName");
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await addDoc(collection(db, "comments"), {
                     name: name,
-                    text: text,
+                    text: text, // حفظ النص بضمان تام تحت مفتاح text
                     likes: 0,
                     createdAt: serverTimestamp()
                 });
@@ -161,6 +161,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const commentData = docSnap.data();
                 const commentId = docSnap.id;
                 
+                // دعم قراءة النص من أي حقل محتمل (text, commentText, message) لو في بيانات قديمة مسجلة بشكل مختلف
+                const commentBody = commentData.text || commentData.commentText || commentData.message || "";
+                const authorName = commentData.name || commentData.userName || "Anonymous";
+
                 const commentCard = document.createElement("div");
                 commentCard.classList.add("comment-card");
                 commentCard.setAttribute("data-id", commentId);
@@ -168,14 +172,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 commentCard.innerHTML = `
                     <div class="comment-header">
                         <div class="comment-user-info">
-                            <div class="avatar">${commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U'}</div>
+                            <div class="avatar">${authorName.charAt(0).toUpperCase()}</div>
                             <div class="comment-info">
-                                <h3>${escapeHtml(commentData.name)}</h3>
+                                <h3>${escapeHtml(authorName)}</h3>
                                 <span class="comment-date">Just now</span>
                             </div>
                         </div>
                     </div>
-                    <p class="comment-text">${escapeHtml(commentData.text)}</p>
+                    <p class="comment-text">${escapeHtml(commentBody)}</p>
                     <div class="comment-actions">
                         <button class="comment-like-btn"><i class="fa-regular fa-heart"></i> <span>${commentData.likes || 0}</span></button>
                         <button class="reply-btn"><i class="fa-solid fa-reply"></i> Reply</button>
@@ -317,15 +321,17 @@ document.addEventListener("DOMContentLoaded", () => {
             repliesContainer.innerHTML = "";
             snapshot.forEach((replySnap) => {
                 const replyData = replySnap.data();
+                const replyBody = replyData.text || replyData.commentText || replyData.message || "";
+                const replyAuthor = replyData.name || "Anonymous";
                 
                 const replyCard = document.createElement("div");
                 replyCard.classList.add("reply-card");
                 replyCard.innerHTML = `
                     <div class="reply-header">
-                        <span><strong>${escapeHtml(replyData.name)}</strong></span>
+                        <span><strong>${escapeHtml(replyAuthor)}</strong></span>
                         <span>Just now</span>
                     </div>
-                    <p class="reply-text">${escapeHtml(replyData.text)}</p>
+                    <p class="reply-text">${escapeHtml(replyBody)}</p>
                 `;
                 repliesContainer.appendChild(replyCard);
             });
