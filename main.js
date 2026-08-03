@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 4. General Like Buttons (e.g., Projects) ---
+    // --- 4. General Like Buttons (Projects) ---
     document.querySelectorAll(".project-like").forEach(btn => {
         btn.addEventListener("click", function() {
             this.classList.toggle("liked");
@@ -117,8 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const commentForm = document.getElementById("commentForm");
     const commentsContainer = document.getElementById("commentsContainer");
 
+    // Helper to get or set current user session name locally
+    function getCurrentUser() {
+        let user = localStorage.getItem("portfolio_user");
+        return user ? user : "";
+    }
+
     if (commentForm && commentsContainer) {
-        // Submit new comment to Firebase with correct field names
         commentForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const nameInput = document.getElementById("commentName");
@@ -131,10 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (name === "" || text === "") return;
 
+            // Save user name in localStorage to remember ownership
+            localStorage.setItem("portfolio_user", name);
+
             try {
                 await addDoc(collection(db, "comments"), {
                     name: name,
-                    text: text, // حفظ النص بضمان تام تحت مفتاح text
+                    text: text,
                     likes: 0,
                     createdAt: serverTimestamp()
                 });
@@ -146,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Real-time listener for comments
         const q = query(collection(db, "comments"), orderBy("createdAt", "desc"));
         
         onSnapshot(q, (snapshot) => {
@@ -161,9 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const commentData = docSnap.data();
                 const commentId = docSnap.id;
                 
-                // دعم قراءة النص من أي حقل محتمل (text, commentText, message) لو في بيانات قديمة مسجلة بشكل مختلف
                 const commentBody = commentData.text || commentData.commentText || commentData.message || "";
                 const authorName = commentData.name || commentData.userName || "Anonymous";
+                const currentUser = getCurrentUser();
+
+                // Check if current visitor is the owner of this comment
+                const isOwner = currentUser && authorName.toLowerCase() === currentUser.toLowerCase();
 
                 const commentCard = document.createElement("div");
                 commentCard.classList.add("comment-card");
@@ -183,8 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="comment-actions">
                         <button class="comment-like-btn"><i class="fa-regular fa-heart"></i> <span>${commentData.likes || 0}</span></button>
                         <button class="reply-btn"><i class="fa-solid fa-reply"></i> Reply</button>
-                        <button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
-                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
+                        ${isOwner ? `<button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
                     </div>
                     <div class="replies-container"></div>
                 `;
@@ -196,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Attach event listeners for comments (like, edit, delete, reply)
     function attachFirestoreCommentEvents(commentCard, commentId) {
         const commentRef = doc(db, "comments", commentId);
 
@@ -211,11 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
             span.textContent = newLikes;
 
-            if (isLiked) {
-                icon.className = "fa-solid fa-heart";
-            } else {
-                icon.className = "fa-regular fa-heart";
-            }
+            icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
 
             try {
                 await updateDoc(commentRef, { likes: newLikes });
@@ -224,65 +229,70 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // 2. Delete Comment
+        // 2. Delete Comment (Owner only)
         const deleteBtn = commentCard.querySelector(".delete-btn");
-        deleteBtn.addEventListener("click", async () => {
-            if (confirm("Are you sure you want to delete this comment?")) {
-                try {
-                    await deleteDoc(commentRef);
-                } catch (err) {
-                    console.error("Error deleting comment:", err);
-                }
-            }
-        });
-
-        // 3. Edit Comment
-        const editBtn = commentCard.querySelector(".edit-btn");
-        const commentTextEl = commentCard.querySelector(".comment-text");
-        editBtn.addEventListener("click", () => {
-            if (commentCard.querySelector(".inline-edit-box")) return;
-
-            const editBox = document.createElement("div");
-            editBox.classList.add("inline-edit-box");
-            editBox.innerHTML = `
-                <textarea>${commentTextEl.textContent}</textarea>
-                <div style="display: flex; gap: 8px;">
-                    <button class="submit-btn-action save-edit">Save</button>
-                    <button class="cancel-btn cancel-edit">Cancel</button>
-                </div>
-            `;
-            commentCard.appendChild(editBox);
-
-            editBox.querySelector(".save-edit").addEventListener("click", async () => {
-                const newText = editBox.querySelector("textarea").value.trim();
-                if (newText !== "") {
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", async () => {
+                if (confirm("Are you sure you want to delete this comment?")) {
                     try {
-                        await updateDoc(commentRef, { text: newText });
-                        commentTextEl.textContent = newText;
+                        await deleteDoc(commentRef);
                     } catch (err) {
-                        console.error("Error updating text:", err);
+                        console.error("Error deleting comment:", err);
                     }
                 }
-                editBox.remove();
             });
+        }
 
-            editBox.querySelector(".cancel-edit").addEventListener("click", () => {
-                editBox.remove();
+        // 3. Edit Comment (Owner only)
+        const editBtn = commentCard.querySelector(".edit-btn");
+        const commentTextEl = commentCard.querySelector(".comment-text");
+        if (editBtn) {
+            editBtn.addEventListener("click", () => {
+                if (commentCard.querySelector(".inline-edit-box")) return;
+
+                const editBox = document.createElement("div");
+                editBox.classList.add("inline-edit-box");
+                editBox.innerHTML = `
+                    <textarea>${commentTextEl.textContent}</textarea>
+                    <div style="display: flex; gap: 8px; margin-top: 5px;">
+                        <button class="submit-btn-action save-edit">Save</button>
+                        <button class="cancel-btn cancel-edit">Cancel</button>
+                    </div>
+                `;
+                commentCard.appendChild(editBox);
+
+                editBox.querySelector(".save-edit").addEventListener("click", async () => {
+                    const newText = editBox.querySelector("textarea").value.trim();
+                    if (newText !== "") {
+                        try {
+                            await updateDoc(commentRef, { text: newText });
+                            commentTextEl.textContent = newText;
+                        } catch (err) {
+                            console.error("Error updating text:", err);
+                        }
+                    }
+                    editBox.remove();
+                });
+
+                editBox.querySelector(".cancel-edit").addEventListener("click", () => {
+                    editBox.remove();
+                });
             });
-        });
+        }
 
         // 4. Reply Box Toggle & Submission
         const replyBtn = commentCard.querySelector(".reply-btn");
-        const repliesContainer = commentCard.querySelector(".replies-container");
         replyBtn.addEventListener("click", () => {
             if (commentCard.querySelector(".inline-reply-box")) return;
+
+            const defaultReplyName = getCurrentUser();
 
             const replyBox = document.createElement("div");
             replyBox.classList.add("inline-reply-box");
             replyBox.innerHTML = `
-                <input type="text" placeholder="Your name..." class="reply-name-input">
+                <input type="text" placeholder="Your name..." class="reply-name-input" value="${escapeHtml(defaultReplyName)}">
                 <textarea placeholder="Write your reply here..."></textarea>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; margin-top: 5px;">
                     <button class="submit-btn-action send-reply">Send Reply</button>
                     <button class="cancel-btn cancel-reply">Cancel</button>
                 </div>
@@ -294,10 +304,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const rText = replyBox.querySelector("textarea").value.trim();
 
                 if (rName !== "" && rText !== "") {
+                    localStorage.setItem("portfolio_user", rName);
                     try {
                         await addDoc(collection(db, `comments/${commentId}/replies`), {
                             name: rName,
                             text: rText,
+                            likes: 0,
                             createdAt: serverTimestamp()
                         });
                         replyBox.remove();
@@ -313,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Load real-time replies for each comment
+    // Load real-time replies with full Like, Edit, and Delete support
     function loadReplies(commentId, repliesContainer) {
         const repliesQuery = query(collection(db, `comments/${commentId}/replies`), orderBy("createdAt", "asc"));
         
@@ -321,19 +333,102 @@ document.addEventListener("DOMContentLoaded", () => {
             repliesContainer.innerHTML = "";
             snapshot.forEach((replySnap) => {
                 const replyData = replySnap.data();
+                const replyId = replySnap.id;
                 const replyBody = replyData.text || replyData.commentText || replyData.message || "";
                 const replyAuthor = replyData.name || "Anonymous";
-                
+                const currentUser = getCurrentUser();
+
+                const isReplyOwner = currentUser && replyAuthor.toLowerCase() === currentUser.toLowerCase();
+
                 const replyCard = document.createElement("div");
                 replyCard.classList.add("reply-card");
+                replyCard.setAttribute("data-reply-id", replyId);
+                
                 replyCard.innerHTML = `
                     <div class="reply-header">
                         <span><strong>${escapeHtml(replyAuthor)}</strong></span>
-                        <span>Just now</span>
+                        <span class="reply-date">Just now</span>
                     </div>
                     <p class="reply-text">${escapeHtml(replyBody)}</p>
+                    <div class="comment-actions" style="margin-top: 5px;">
+                        <button class="reply-like-btn"><i class="fa-regular fa-heart"></i> <span>${replyData.likes || 0}</span></button>
+                        ${isReplyOwner ? `<button class="reply-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="reply-delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>` : ''}
+                    </div>
                 `;
                 repliesContainer.appendChild(replyCard);
+
+                const replyRef = doc(db, `comments/${commentId}/replies`, replyId);
+
+                // Reply Like
+                const replyLikeBtn = replyCard.querySelector(".reply-like-btn");
+                replyLikeBtn.addEventListener("click", async () => {
+                    const isLiked = replyLikeBtn.classList.toggle("liked");
+                    const icon = replyLikeBtn.querySelector("i");
+                    const span = replyLikeBtn.querySelector("span");
+                    
+                    let currentLikes = parseInt(span.textContent) || 0;
+                    let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+                    span.textContent = newLikes;
+                    icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
+
+                    try {
+                        await updateDoc(replyRef, { likes: newLikes });
+                    } catch (err) {
+                        console.error("Error updating reply likes:", err);
+                    }
+                });
+
+                // Reply Delete
+                const replyDeleteBtn = replyCard.querySelector(".reply-delete-btn");
+                if (replyDeleteBtn) {
+                    replyDeleteBtn.addEventListener("click", async () => {
+                        if (confirm("Are you sure you want to delete this reply?")) {
+                            try {
+                                await deleteDoc(replyRef);
+                            } catch (err) {
+                                console.error("Error deleting reply:", err);
+                            }
+                        }
+                    });
+                }
+
+                // Reply Edit
+                const replyEditBtn = replyCard.querySelector(".reply-edit-btn");
+                const replyTextEl = replyCard.querySelector(".reply-text");
+                if (replyEditBtn) {
+                    replyEditBtn.addEventListener("click", () => {
+                        if (replyCard.querySelector(".inline-edit-box")) return;
+
+                        const editBox = document.createElement("div");
+                        editBox.classList.add("inline-edit-box");
+                        editBox.innerHTML = `
+                            <textarea>${replyTextEl.textContent}</textarea>
+                            <div style="display: flex; gap: 8px; margin-top: 5px;">
+                                <button class="submit-btn-action save-reply-edit">Save</button>
+                                <button class="cancel-btn cancel-reply-edit">Cancel</button>
+                            </div>
+                        `;
+                        replyCard.appendChild(editBox);
+
+                        editBox.querySelector(".save-reply-edit").addEventListener("click", async () => {
+                            const newText = editBox.querySelector("textarea").value.trim();
+                            if (newText !== "") {
+                                try {
+                                    await updateDoc(replyRef, { text: newText });
+                                    replyTextEl.textContent = newText;
+                                } catch (err) {
+                                    console.error("Error updating reply text:", err);
+                                }
+                            }
+                            editBox.remove();
+                        });
+
+                        editBox.querySelector(".cancel-reply-edit").addEventListener("click", () => {
+                            editBox.remove();
+                        });
+                    });
+                }
             });
         });
     }
