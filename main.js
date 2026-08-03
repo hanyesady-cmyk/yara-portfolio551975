@@ -79,56 +79,57 @@ window.closeVideo = function() {
     }
 };
 
-// Project Likes Handling via Firebase Real-time (onSnapshot) to load old counts and sync live
+// Project Likes Handling (Hybrid: LocalStorage for instant persistence + Firebase background sync)
 const projectLikes = document.querySelectorAll('.project-like');
-projectLikes.forEach((button) => {
-    const projectId = button.getAttribute('data-id');
+projectLikes.forEach((button, index) => {
+    const projectId = button.getAttribute('data-id') || `project_${index}`;
     const likesSpan = button.querySelector('.project-likes');
     
-    if (!likesSpan || !projectId) return;
+    if (!likesSpan) return;
 
-    const projectRef = doc(db, "projects_likes", projectId);
+    // 1. استرجاع العدد والحالة من التخزين المحلي فوراً عشان يثبت وما يختفيش مع الـ Refresh
+    const savedLikes = localStorage.getItem(`portfolio_likes_${projectId}`);
+    const isLiked = localStorage.getItem(`portfolio_liked_${projectId}`);
 
-    // جلب العدد الحقيقي وتحديثه في الوقت الفعلي من فايربيز (لعرض العد القديم والـ 10 لايكات)
-    onSnapshot(projectRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            likesSpan.textContent = data.likes || 0;
-        } else {
-            likesSpan.textContent = 0;
-        }
-    }, (error) => {
-        console.error("Error fetching project likes: ", error);
-    });
+    if (savedLikes !== null) {
+        likesSpan.textContent = savedLikes;
+    }
+    
+    if (isLiked === 'true') {
+        button.classList.add('liked');
+    }
 
-    // تحديث اللايك عند الضغط وحفظه في فايربيز مباشرة
+    // 2. إدارة الضغط على اللايك ومنع التكرار العشوائي
     button.addEventListener('click', async () => {
+        let currentLikes = parseInt(likesSpan.textContent) || 0;
+
+        if (!button.classList.contains('liked')) {
+            currentLikes++;
+            button.classList.add('liked');
+            localStorage.setItem(`portfolio_liked_${projectId}`, 'true');
+        } else {
+            currentLikes = Math.max(0, currentLikes - 1);
+            button.classList.remove('liked');
+            localStorage.removeItem(`portfolio_liked_${projectId}`);
+        }
+
+        // تحديث فورى على الشاشة وفي التخزين المحلي
+        likesSpan.textContent = currentLikes;
+        localStorage.setItem(`portfolio_likes_${projectId}`, currentLikes);
+
+        // محاولة التحديث في الـ Firebase في الخلفية
         try {
+            const projectRef = doc(db, "projects_likes", projectId);
             const snap = await getDoc(projectRef);
-            let currentLikes = 0;
-            
             if (snap.exists()) {
-                currentLikes = snap.data().likes || 0;
-            }
-
-            let newLikes;
-            if (!button.classList.contains('liked')) {
-                newLikes = currentLikes + 1;
-                button.classList.add('liked');
-            } else {
-                newLikes = Math.max(0, currentLikes - 1);
-                button.classList.remove('liked');
-            }
-
-            if (snap.exists()) {
-                await updateDoc(projectRef, { likes: newLikes });
+                await updateDoc(projectRef, { likes: currentLikes });
             } else {
                 import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async ({ setDoc }) => {
-                    await setDoc(projectRef, { likes: newLikes });
+                    await setDoc(projectRef, { likes: currentLikes });
                 });
             }
-        } catch (error) {
-            console.error("Error updating project like: ", error);
+        } catch (e) {
+            console.log("Firebase background sync note: saved locally.");
         }
     });
 });
@@ -295,13 +296,13 @@ window.submitReply = async function(commentId) {
 function renderReplies(repliesArray) {
     if (!repliesArray || repliesArray.length === 0) return '';
     return repliesArray.map(r => `
-        <div class="reply-card">
+        <button class="reply-card" style="border:none; background:none; text-align:right; width:100%; cursor:default;">
             <div class="reply-header">
                 <strong>${escapeHtml(r.name)}</strong>
                 <span>${r.date || ''}</span>
             </div>
             <p class="reply-text">${escapeHtml(r.message)}</p>
-        </div>
+        </button>
     `).join('');
 }
 
