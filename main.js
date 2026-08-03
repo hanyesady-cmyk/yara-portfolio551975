@@ -5,8 +5,6 @@ import {
     collection, 
     addDoc, 
     doc, 
-    getDoc,
-    setDoc,
     updateDoc, 
     deleteDoc, 
     onSnapshot, 
@@ -98,66 +96,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- 4. Projects Real-time Likes from Firebase ---
-    document.querySelectorAll(".project-card").forEach((card, index) => {
-        const projectId = `project_${index + 1}`;
-        const likeBtn = card.querySelector(".project-like");
-        if (!likeBtn) return;
+    // --- 4. General Like Buttons (Projects) ---
+    document.querySelectorAll(".project-like").forEach(btn => {
+        btn.addEventListener("click", function() {
+            this.classList.toggle("liked");
+            const icon = this.querySelector("i");
+            const span = this.querySelector("span");
 
-        const span = likeBtn.querySelector("span");
-        const icon = likeBtn.querySelector("i");
-        const projectRef = doc(db, "projects_likes", projectId);
-
-        // Fetch initial likes
-        getDoc(projectRef).then((docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                span.textContent = `${data.likes || 0} Likes`;
-            }
-        });
-
-        likeBtn.addEventListener("click", async () => {
-            const isLiked = likeBtn.classList.toggle("liked");
-            let currentLikes = parseInt(span.textContent) || 0;
-            let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-            
-            span.textContent = `${newLikes} Likes`;
-            icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
-
-            try {
-                await setDoc(projectRef, { likes: newLikes }, { merge: true });
-            } catch (err) {
-                console.error("Error updating project like:", err);
+            if (this.classList.contains("liked")) {
+                if (icon) icon.className = "fa-solid fa-heart";
+                if (span) span.textContent = parseInt(span.textContent || 0) + 1;
+            } else {
+                if (icon) icon.className = "fa-regular fa-heart";
+                if (span) span.textContent = Math.max(0, parseInt(span.textContent || 1) - 1);
             }
         });
     });
 
-    // --- Helper: Time Ago Formatter ---
-    function formatTimeAgo(timestamp) {
-        if (!timestamp) return "Just now";
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const seconds = Math.floor((new Date() - date) / 1000);
-
-        let interval = seconds / 31536000;
-        if (interval > 1) return Math.floor(interval) + " years ago";
-        interval = seconds / 2592000;
-        if (interval > 1) return Math.floor(interval) + " months ago";
-        interval = seconds / 86400;
-        if (interval > 1) return Math.floor(interval) + " days ago";
-        interval = seconds / 3600;
-        if (interval > 1) return Math.floor(interval) + " hours ago";
-        interval = seconds / 60;
-        if (interval > 1) return Math.floor(interval) + " minutes ago";
-        return "Just now";
-    }
-
     // --- 5. Firebase Real-time Comments & Replies System ---
     const commentForm = document.getElementById("commentForm");
     const commentsContainer = document.getElementById("commentsContainer");
-
-    function getCurrentUser() {
-        return localStorage.getItem("portfolio_user") || "";
-    }
 
     if (commentForm && commentsContainer) {
         commentForm.addEventListener("submit", async (e) => {
@@ -172,8 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (name === "" || text === "") return;
 
-            localStorage.setItem("portfolio_user", name);
-
             try {
                 await addDoc(collection(db, "comments"), {
                     name: name,
@@ -185,7 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 textInput.value = "";
             } catch (error) {
                 console.error("Error adding comment: ", error);
-                alert("Error sending comment.");
             }
         });
 
@@ -203,14 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const commentData = docSnap.data();
                 const commentId = docSnap.id;
                 
-                const commentBody = commentData.text || commentData.commentText || commentData.message || "";
-                const authorName = commentData.name || commentData.userName || "Anonymous";
-                const currentUser = getCurrentUser();
-
-                // Strict Ownership Verification
-                const isOwner = currentUser && authorName.trim().toLowerCase() === currentUser.trim().toLowerCase();
-                const timeAgo = formatTimeAgo(commentData.createdAt);
-
                 const commentCard = document.createElement("div");
                 commentCard.classList.add("comment-card");
                 commentCard.setAttribute("data-id", commentId);
@@ -218,36 +165,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 commentCard.innerHTML = `
                     <div class="comment-header">
                         <div class="comment-user-info">
-                            <div class="avatar">${authorName.charAt(0).toUpperCase()}</div>
+                            <div class="avatar">${commentData.name ? commentData.name.charAt(0).toUpperCase() : 'U'}</div>
                             <div class="comment-info">
-                                <h3>${escapeHtml(authorName)}</h3>
-                                <span class="comment-date">${timeAgo}</span>
+                                <h3>${escapeHtml(commentData.name)}</h3>
+                                <span class="comment-date">Just now</span>
                             </div>
                         </div>
                     </div>
-                    <p class="comment-text">${escapeHtml(commentBody)}</p>
+                    <p class="comment-text">${escapeHtml(commentData.text)}</p>
                     <div class="comment-actions">
                         <button class="comment-like-btn"><i class="fa-regular fa-heart"></i> <span>${commentData.likes || 0}</span></button>
                         <button class="reply-btn"><i class="fa-solid fa-reply"></i> Reply</button>
-                        ${isOwner ? `
-                            <button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
-                            <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
-                        ` : ''}
+                        <button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>
                     <div class="replies-container"></div>
                 `;
 
                 commentsContainer.appendChild(commentCard);
-                attachFirestoreCommentEvents(commentCard, commentId, authorName);
+                attachFirestoreCommentEvents(commentCard, commentId);
                 loadReplies(commentId, commentCard.querySelector(".replies-container"));
             });
         });
     }
 
-    function attachFirestoreCommentEvents(commentCard, commentId, authorName) {
+    function attachFirestoreCommentEvents(commentCard, commentId) {
         const commentRef = doc(db, "comments", commentId);
 
-        // Comment Like
         const likeBtn = commentCard.querySelector(".comment-like-btn");
         likeBtn.addEventListener("click", async () => {
             const isLiked = likeBtn.classList.toggle("liked");
@@ -257,6 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let currentLikes = parseInt(span.textContent) || 0;
             let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
             span.textContent = newLikes;
+
             icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
 
             try {
@@ -266,70 +211,61 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Delete Comment (Owner Only)
         const deleteBtn = commentCard.querySelector(".delete-btn");
-        if (deleteBtn) {
-            deleteBtn.addEventListener("click", async () => {
-                if (confirm("Are you sure you want to delete this comment?")) {
-                    try {
-                        await deleteDoc(commentRef);
-                    } catch (err) {
-                        console.error("Error deleting comment:", err);
-                    }
+        deleteBtn.addEventListener("click", async () => {
+            if (confirm("Are you sure you want to delete this comment?")) {
+                try {
+                    await deleteDoc(commentRef);
+                } catch (err) {
+                    console.error("Error deleting comment:", err);
                 }
-            });
-        }
+            }
+        });
 
-        // Edit Comment (Owner Only)
         const editBtn = commentCard.querySelector(".edit-btn");
         const commentTextEl = commentCard.querySelector(".comment-text");
-        if (editBtn) {
-            editBtn.addEventListener("click", () => {
-                if (commentCard.querySelector(".inline-edit-box")) return;
+        editBtn.addEventListener("click", () => {
+            if (commentCard.querySelector(".inline-edit-box")) return;
 
-                const editBox = document.createElement("div");
-                editBox.classList.add("inline-edit-box");
-                editBox.innerHTML = `
-                    <textarea>${commentTextEl.textContent}</textarea>
-                    <div style="display: flex; gap: 8px; margin-top: 5px;">
-                        <button class="submit-btn-action save-edit">Save</button>
-                        <button class="cancel-btn cancel-edit">Cancel</button>
-                    </div>
-                `;
-                commentCard.appendChild(editBox);
+            const editBox = document.createElement("div");
+            editBox.classList.add("inline-edit-box");
+            editBox.innerHTML = `
+                <textarea>${commentTextEl.textContent}</textarea>
+                <div style="display: flex; gap: 8px;">
+                    <button class="submit-btn-action save-edit">Save</button>
+                    <button class="cancel-btn cancel-edit">Cancel</button>
+                </div>
+            `;
+            commentCard.appendChild(editBox);
 
-                editBox.querySelector(".save-edit").addEventListener("click", async () => {
-                    const newText = editBox.querySelector("textarea").value.trim();
-                    if (newText !== "") {
-                        try {
-                            await updateDoc(commentRef, { text: newText });
-                            commentTextEl.textContent = newText;
-                        } catch (err) {
-                            console.error("Error updating text:", err);
-                        }
+            editBox.querySelector(".save-edit").addEventListener("click", async () => {
+                const newText = editBox.querySelector("textarea").value.trim();
+                if (newText !== "") {
+                    try {
+                        await updateDoc(commentRef, { text: newText });
+                        commentTextEl.textContent = newText;
+                    } catch (err) {
+                        console.error("Error updating text:", err);
                     }
-                    editBox.remove();
-                });
-
-                editBox.querySelector(".cancel-edit").addEventListener("click", () => {
-                    editBox.remove();
-                });
+                }
+                editBox.remove();
             });
-        }
 
-        // Reply Box Toggle & Submission
+            editBox.querySelector(".cancel-edit").addEventListener("click", () => {
+                editBox.remove();
+            });
+        });
+
         const replyBtn = commentCard.querySelector(".reply-btn");
         replyBtn.addEventListener("click", () => {
             if (commentCard.querySelector(".inline-reply-box")) return;
 
-            const defaultReplyName = getCurrentUser();
-
             const replyBox = document.createElement("div");
             replyBox.classList.add("inline-reply-box");
             replyBox.innerHTML = `
-                <input type="text" placeholder="Your name..." class="reply-name-input" value="${escapeHtml(defaultReplyName)}">
+                <input type="text" placeholder="Your name..." class="reply-name-input">
                 <textarea placeholder="Write your reply here..."></textarea>
-                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                <div style="display: flex; gap: 8px;">
                     <button class="submit-btn-action send-reply">Send Reply</button>
                     <button class="cancel-btn cancel-reply">Cancel</button>
                 </div>
@@ -341,12 +277,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const rText = replyBox.querySelector("textarea").value.trim();
 
                 if (rName !== "" && rText !== "") {
-                    localStorage.setItem("portfolio_user", rName);
                     try {
                         await addDoc(collection(db, `comments/${commentId}/replies`), {
                             name: rName,
                             text: rText,
-                            likes: 0,
                             createdAt: serverTimestamp()
                         });
                         replyBox.remove();
@@ -362,7 +296,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Load real-time replies with strict owner check for Edit/Delete
     function loadReplies(commentId, repliesContainer) {
         const repliesQuery = query(collection(db, `comments/${commentId}/replies`), orderBy("createdAt", "asc"));
         
@@ -370,111 +303,21 @@ document.addEventListener("DOMContentLoaded", () => {
             repliesContainer.innerHTML = "";
             snapshot.forEach((replySnap) => {
                 const replyData = replySnap.data();
-                const replyId = replySnap.id;
-                const replyBody = replyData.text || replyData.commentText || replyData.message || "";
-                const replyAuthor = replyData.name || "Anonymous";
-                const currentUser = getCurrentUser();
-
-                // Strict Reply Ownership Verification
-                const isReplyOwner = currentUser && replyAuthor.trim().toLowerCase() === currentUser.trim().toLowerCase();
-                const replyTimeAgo = formatTimeAgo(replyData.createdAt);
-
+                
                 const replyCard = document.createElement("div");
                 replyCard.classList.add("reply-card");
-                replyCard.setAttribute("data-reply-id", replyId);
-                
                 replyCard.innerHTML = `
                     <div class="reply-header">
-                        <span><strong>${escapeHtml(replyAuthor)}</strong></span>
-                        <span class="reply-date">${replyTimeAgo}</span>
+                        <span><strong>${escapeHtml(replyData.name)}</strong></span>
+                        <span>Just now</span>
                     </div>
-                    <p class="reply-text">${escapeHtml(replyBody)}</p>
-                    <div class="comment-actions" style="margin-top: 5px;">
-                        <button class="reply-like-btn"><i class="fa-regular fa-heart"></i> <span>${replyData.likes || 0}</span></button>
-                        ${isReplyOwner ? `
-                            <button class="reply-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
-                            <button class="reply-delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
-                        ` : ''}
-                    </div>
+                    <p class="reply-text">${escapeHtml(replyData.text)}</p>
                 `;
                 repliesContainer.appendChild(replyCard);
-
-                const replyRef = doc(db, `comments/${commentId}/replies`, replyId);
-
-                // Reply Like
-                const replyLikeBtn = replyCard.querySelector(".reply-like-btn");
-                replyLikeBtn.addEventListener("click", async () => {
-                    const isLiked = replyLikeBtn.classList.toggle("liked");
-                    const icon = replyLikeBtn.querySelector("i");
-                    const span = replyLikeBtn.querySelector("span");
-                    
-                    let currentLikes = parseInt(span.textContent) || 0;
-                    let newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-                    span.textContent = newLikes;
-                    icon.className = isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart";
-
-                    try {
-                        await updateDoc(replyRef, { likes: newLikes });
-                    } catch (err) {
-                        console.error("Error updating reply likes:", err);
-                    }
-                });
-
-                // Reply Delete (Owner Only)
-                const replyDeleteBtn = replyCard.querySelector(".reply-delete-btn");
-                if (replyDeleteBtn) {
-                    replyDeleteBtn.addEventListener("click", async () => {
-                        if (confirm("Are you sure you want to delete this reply?")) {
-                            try {
-                                await deleteDoc(replyRef);
-                            } catch (err) {
-                                console.error("Error deleting reply:", err);
-                            }
-                        }
-                    });
-                }
-
-                // Reply Edit (Owner Only)
-                const replyEditBtn = replyCard.querySelector(".reply-edit-btn");
-                const replyTextEl = replyCard.querySelector(".reply-text");
-                if (replyEditBtn) {
-                    replyEditBtn.addEventListener("click", () => {
-                        if (replyCard.querySelector(".inline-edit-box")) return;
-
-                        const editBox = document.createElement("div");
-                        editBox.classList.add("inline-edit-box");
-                        editBox.innerHTML = `
-                            <textarea>${replyTextEl.textContent}</textarea>
-                            <div style="display: flex; gap: 8px; margin-top: 5px;">
-                                <button class="submit-btn-action save-reply-edit">Save</button>
-                                <button class="cancel-btn cancel-reply-edit">Cancel</button>
-                            </div>
-                        `;
-                        replyCard.appendChild(editBox);
-
-                        editBox.querySelector(".save-reply-edit").addEventListener("click", async () => {
-                            const newText = editBox.querySelector("textarea").value.trim();
-                            if (newText !== "") {
-                                try {
-                                    await updateDoc(replyRef, { text: newText });
-                                    replyTextEl.textContent = newText;
-                                } catch (err) {
-                                    console.error("Error updating reply text:", err);
-                                }
-                            }
-                            editBox.remove();
-                        });
-
-                        editBox.querySelector(".cancel-reply-edit").addEventListener("click", () => {
-                            editBox.remove();
-                        });
-                    });
-                }
             });
         });
     }
 
-    // Security helper to prevent XSS
     function escapeHtml(text) {
         if (!text) return "";
         return text
