@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 6. Render Comments Dynamically & Safely Support Old/New Replies
+    // 6. Render Comments Dynamically
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
@@ -136,8 +136,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     repliesHTML = '<div class="replies-container">';
                     data.replies.forEach((reply, rIndex) => {
                         const replyLikes = reply.likes || 0;
-                        // الرد القديم اللي ملوش deviceId بيكون متاح تعديله/حذفه أو حسب الرغبة، والجديد بمستوى أمان جهازه
-                        const isReplyOwner = reply.deviceId ? (reply.deviceId === deviceId) : false;
+                        
+                        // السماح بالتعديل والحذف للرد لو الـ deviceId بتاعه مطابق، أو لو الرد ملوش deviceId أصلاً (الردود القديمة)
+                        const isReplyOwner = (!reply.deviceId || reply.deviceId === deviceId);
                         
                         repliesHTML += `
                             <div class="reply-card" data-reply-index="${rIndex}">
@@ -297,6 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (snap.exists()) {
                     let replies = snap.data().replies || [];
                     replies.splice(rIndex, 1);
+                    // لو الردود بقت فاضية أو تم الحذف، نحدث الداتا بيز
                     try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
                 }
             }
@@ -315,6 +317,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     let newMsg = prompt("عدل الرد:", replies[rIndex].message);
                     if (newMsg !== null && newMsg.trim() !== "") {
                         replies[rIndex].message = newMsg.trim();
+                        // نضمن إن لو الرد القديم اتعدل، يتسجل ليه deviceId بتاخد صلاحية تعديله المستقبلي
+                        if (!replies[rIndex].deviceId) {
+                            replies[rIndex].deviceId = deviceId;
+                        }
                         try { await updateDoc(ref, { replies: replies }); } catch (err) { console.error(err); }
                     }
                 }
