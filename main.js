@@ -28,24 +28,51 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Global Video Modal Functions (Linked directly to HTML inline onclick)
+window.openVideo = function(videoUrl) {
+    const modal = document.getElementById('videoModal');
+    const player = document.getElementById('videoPlayer');
+    if (modal && player) {
+        player.src = videoUrl;
+        modal.classList.add('active');
+        player.play();
+    }
+};
+
+window.closeVideo = function() {
+    const modal = document.getElementById('videoModal');
+    const player = document.getElementById('videoPlayer');
+    if (modal && player) {
+        player.pause();
+        player.src = "";
+        modal.classList.remove('active');
+    }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. MOBILE MENU TOGGLE
+    // 1. Footer Year
+    const yearSpan = document.getElementById('year');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+    }
+
+    // 2. Mobile Menu Toggle
     const menuBtn = document.getElementById('menuBtn');
-    const navUl = document.querySelector('nav ul');
-    if (menuBtn && navUl) {
+    const navLinks = document.getElementById('navLinks');
+    if (menuBtn && navLinks) {
         menuBtn.addEventListener('click', () => {
-            navUl.classList.toggle('active');
+            navLinks.classList.toggle('active');
         });
     }
 
-    // 2. DEVICE ID MANAGEMENT (صلاحيات التعديل والحذف للجهاز)
+    // 3. Device ID Management
     let deviceId = localStorage.getItem('portfolio_device_id');
     if (!deviceId) {
         deviceId = 'dev_' + Math.random().toString(36).substring(2, 15);
         localStorage.setItem('portfolio_device_id', deviceId);
     }
 
-    // 3. PROJECTS LIKES INITIALIZATION & SYNC
+    // 4. Projects Likes Initialization & Sync
     document.querySelectorAll(".project-like").forEach(async (button) => {
         const id = button.dataset.id;
         if (!id) return;
@@ -66,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 4. COMMENTS SUBMISSION
+    // 5. Comments Form Submission
     const commentsRef = collection(db, "comments");
     const commentForm = document.getElementById('commentForm');
     const commentsContainer = document.getElementById('commentsContainer');
@@ -93,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 5. RENDER COMMENTS DYNAMICALLY
+    // 6. Render Comments Dynamically
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
@@ -107,7 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const id = commentDoc.id;
                 const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
                 
-                // السماح للجهاز الحالي بالتحكم بالتعليقات (الجديدة أو القديمة التي لا تحتوي على deviceId)
                 const commentDeviceId = data.deviceId || deviceId;
                 const isOwner = (commentDeviceId === deviceId);
 
@@ -155,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 6. GLOBAL EVENT DELEGATION (Likes, Delete, Edit, Reply)
+    // 7. Global Event Delegation (Likes, Delete, Edit, Reply)
     document.addEventListener('click', async (e) => {
         // Likes Click
         const likeBtn = e.target.closest('.project-like');
