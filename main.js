@@ -12,7 +12,8 @@ import {
     serverTimestamp,
     query,
     orderBy,
-    onSnapshot
+    onSnapshot,
+    arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -31,55 +32,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. MOBILE MENU TOGGLE
     const menuBtn = document.getElementById('menuBtn');
     const navUl = document.querySelector('nav ul');
-
     if (menuBtn && navUl) {
         menuBtn.addEventListener('click', () => {
             navUl.classList.toggle('active');
-            menuBtn.classList.toggle('fa-xmark');
-        });
-
-        navUl.querySelectorAll('li a').forEach(link => {
-            link.addEventListener('click', () => {
-                navUl.classList.remove('active');
-                if (menuBtn) menuBtn.classList.remove('fa-xmark');
-            });
         });
     }
 
-    // 2. SCROLL ACTIVE LINK
-    const sections = document.querySelectorAll("section");
-    const navLinks = document.querySelectorAll("nav ul li a");
+    // 2. DEVICE ID MANAGEMENT (صلاحيات التعديل والحذف للجهاز)
+    let deviceId = localStorage.getItem('portfolio_device_id');
+    if (!deviceId) {
+        deviceId = 'dev_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('portfolio_device_id', deviceId);
+    }
 
-    window.addEventListener("scroll", () => {
-        let current = "";
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            if (pageYOffset >= sectionTop - 60) {
-                current = section.getAttribute("id");
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.classList.remove("active");
-            if (link.getAttribute("href").substring(1) === current) {
-                link.classList.add("active");
-            }
-        });
+    // 3. PROJECTS LIKES INITIALIZATION & SYNC
+    document.querySelectorAll(".project-like").forEach(async (button) => {
+        const id = button.dataset.id;
+        if (!id) return;
+        const ref = doc(db, "projects", id);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) {
+            await setDoc(ref, { likes: 0 });
+        }
     });
-
-    // 3. PROJECT LIKES & FIREBASE SYNC
-    async function initializeProjects() {
-        document.querySelectorAll(".project-like").forEach(async (button) => {
-            const id = button.dataset.id;
-            if(!id) return;
-            const ref = doc(db, "projects", id);
-            const snap = await getDoc(ref);
-            if (!snap.exists()) {
-                await setDoc(ref, { likes: 0 });
-            }
-        });
-    }
-    initializeProjects();
 
     onSnapshot(collection(db, "projects"), (snapshot) => {
         snapshot.forEach(project => {
@@ -91,26 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    document.querySelectorAll(".project-like").forEach(button => {
-        button.addEventListener("click", async () => {
-            const id = button.dataset.id;
-            const storageKey = "liked_" + id;
-            if (localStorage.getItem(storageKey)) {
-                alert("You already liked this project ❤️");
-                return;
-            }
-            await updateDoc(doc(db, "projects", id), { likes: increment(1) });
-            localStorage.setItem(storageKey, "true");
-        });
-    });
-
-    // 4. COMMENTS SYSTEM (Firebase + Edit/Delete Same Device)
-    let deviceId = localStorage.getItem('portfolio_device_id');
-    if (!deviceId) {
-        deviceId = 'dev_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('portfolio_device_id', deviceId);
-    }
-
+    // 4. COMMENTS SUBMISSION
     const commentsRef = collection(db, "comments");
     const commentForm = document.getElementById('commentForm');
     const commentsContainer = document.getElementById('commentsContainer');
@@ -120,15 +76,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (commentForm) {
         commentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!commentName || !commentMessage) return;
-            if (commentName.value.trim() === "" || commentMessage.value.trim() === "") return;
+            if (!commentName.value.trim() || !commentMessage.value.trim()) return;
 
             try {
                 await addDoc(commentsRef, {
                     deviceId: deviceId,
                     name: commentName.value.trim(),
                     message: commentMessage.value.trim(),
-                    likes: 0,
+                    replies: [],
                     createdAt: serverTimestamp()
                 });
                 commentForm.reset();
@@ -138,12 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // 5. RENDER COMMENTS DYNAMICALLY
     if (commentsContainer) {
         onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
             commentsContainer.innerHTML = "";
-            
             if (snapshot.empty) {
-                commentsContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 14px;">No comments yet. Be the first to comment!</p>`;
+                commentsContainer.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 14px;">No comments yet.</p>`;
                 return;
             }
 
@@ -151,7 +106,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = commentDoc.data();
                 const id = commentDoc.id;
                 const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
-                const isOwner = (data.deviceId === deviceId);
+                
+                // السماح للجهاز الحالي بالتحكم بالتعليقات (الجديدة أو القديمة التي لا تحتوي على deviceId)
+                const commentDeviceId = data.deviceId || deviceId;
+                const isOwner = (commentDeviceId === deviceId);
+
+                let repliesHTML = '';
+                if (data.replies && data.replies.length > 0) {
+                    repliesHTML = '<div class="replies-container">';
+                    data.replies.forEach(reply => {
+                        repliesHTML += `
+                            <div class="reply-card">
+                                <div class="reply-header">
+                                    <span><b>${escapeHTML(reply.name)}</b></span>
+                                    <span>${reply.date || ""}</span>
+                                </div>
+                                <div class="reply-text">${escapeHTML(reply.message)}</div>
+                            </div>
+                        `;
+                    });
+                    repliesHTML += '</div>';
+                }
 
                 const card = document.createElement('div');
                 card.className = 'comment-card';
@@ -164,70 +139,103 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="comment-date">${dateStr}</span>
                             </div>
                         </div>
-                        ${isOwner ? `
-                        <div class="comment-owner-actions">
-                            <button class="edit-btn" onclick="editComment('${id}', '${data.deviceId}')">Edit</button>
-                            <button class="delete-btn" onclick="deleteComment('${id}', '${data.deviceId}')">Delete</button>
-                        </div>` : ''}
+                        <div class="comment-actions">
+                            <button class="reply-btn" data-id="${id}">Reply</button>
+                            ${isOwner ? `
+                                <button class="edit-btn" data-id="${id}">Edit</button>
+                                <button class="delete-btn" data-id="${id}">Delete</button>
+                            ` : ''}
+                        </div>
                     </div>
                     <p class="comment-text">${escapeHTML(data.message)}</p>
+                    ${repliesHTML}
                 `;
                 commentsContainer.appendChild(card);
             });
         });
     }
-});
 
-// 5. GLOBAL FUNCTIONS FOR EDIT & DELETE
-window.deleteComment = async function(commentId, commentDeviceId) {
-    let currentDeviceId = localStorage.getItem('portfolio_device_id');
-    if (commentDeviceId !== currentDeviceId) {
-        alert("You can only delete your own comments!");
-        return;
-    }
-
-    if (confirm("Are you sure you want to delete this comment?")) {
-        try {
-            await deleteDoc(doc(db, "comments", commentId));
-        } catch (error) {
-            console.error("Error deleting comment: ", error);
+    // 6. GLOBAL EVENT DELEGATION (Likes, Delete, Edit, Reply)
+    document.addEventListener('click', async (e) => {
+        // Likes Click
+        const likeBtn = e.target.closest('.project-like');
+        if (likeBtn) {
+            const projectId = likeBtn.dataset.id;
+            if (!projectId) return;
+            
+            const storageKey = `liked_${projectId}`;
+            if (localStorage.getItem(storageKey)) {
+                alert("You already liked this project ❤️");
+                return;
+            }
+            
+            try {
+                await updateDoc(doc(db, "projects", projectId), { 
+                    likes: increment(1) 
+                });
+                localStorage.setItem(storageKey, "true");
+            } catch (error) {
+                console.error("Error adding like:", error);
+            }
         }
-    }
-};
 
-window.editComment = async function(commentId, commentDeviceId) {
-    let currentDeviceId = localStorage.getItem('portfolio_device_id');
-    if (commentDeviceId !== currentDeviceId) {
-        alert("You can only edit your own comments!");
-        return;
-    }
+        // Delete Comment
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (deleteBtn) {
+            const commentId = deleteBtn.dataset.id;
+            if (confirm("متأكد إنك عايز تحذف الكومنت ده؟")) {
+                try {
+                    await deleteDoc(doc(db, "comments", commentId));
+                } catch (error) {
+                    console.error("Error deleting comment:", error);
+                }
+            }
+        }
 
-    let newText = prompt("Edit your comment:");
-    if (newText !== null) {
-        let trimmedText = newText.trim();
-        if (trimmedText !== "") {
+        // Edit Comment
+        const editBtn = e.target.closest('.edit-btn');
+        if (editBtn) {
+            const commentId = editBtn.dataset.id;
+            let newText = prompt("عدل تعليقك:");
+            if (newText !== null && newText.trim() !== "") {
+                try {
+                    await updateDoc(doc(db, "comments", commentId), { 
+                        message: newText.trim() 
+                    });
+                } catch (error) {
+                    console.error("Error updating comment:", error);
+                }
+            }
+        }
+
+        // Reply to Comment
+        const replyBtn = e.target.closest('.reply-btn');
+        if (replyBtn) {
+            const commentId = replyBtn.dataset.id;
+            let replyName = prompt("اسمك للرد:");
+            if (!replyName || !replyName.trim()) return;
+
+            let replyMsg = prompt("الرد بتاعك:");
+            if (!replyMsg || !replyMsg.trim()) return;
+
             try {
                 await updateDoc(doc(db, "comments", commentId), {
-                    message: trimmedText
+                    replies: arrayUnion({
+                        name: replyName.trim(),
+                        message: replyMsg.trim(),
+                        date: new Date().toLocaleDateString()
+                    })
                 });
             } catch (error) {
-                console.error("Error updating comment: ", error);
+                console.error("Error adding reply:", error);
             }
-        } else {
-            alert("Comment cannot be empty!");
         }
-    }
-};
+    });
+});
 
 function escapeHTML(str) {
     if (!str) return "";
-    return str.replace(/[&<>'"]/g, 
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag)
-    );
+    return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
 }
