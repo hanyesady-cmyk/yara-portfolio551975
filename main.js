@@ -79,7 +79,7 @@ window.closeVideo = function() {
     }
 };
 
-// Project Likes Handling (LocalStorage + Firebase sync)
+// Project Likes Handling via Firebase Real-time (onSnapshot) to load old counts and sync live
 const projectLikes = document.querySelectorAll('.project-like');
 projectLikes.forEach((button) => {
     const projectId = button.getAttribute('data-id');
@@ -87,46 +87,48 @@ projectLikes.forEach((button) => {
     
     if (!likesSpan || !projectId) return;
 
-    // Load from LocalStorage for instant stable display
-    const localLikes = localStorage.getItem(`like_${projectId}`);
-    const isLikedLocally = localStorage.getItem(`liked_${projectId}`);
-    
-    if (localLikes !== null) {
-        likesSpan.textContent = localLikes;
-    }
-    if (isLikedLocally) {
-        button.classList.add('liked');
-    }
+    const projectRef = doc(db, "projects_likes", projectId);
 
-    button.addEventListener('click', async () => {
-        let currentLikes = parseInt(likesSpan.textContent) || 0;
-        
-        if (!button.classList.contains('liked')) {
-            currentLikes++;
-            button.classList.add('liked');
-            localStorage.setItem(`liked_${projectId}`, 'true');
+    // جلب العدد الحقيقي وتحديثه في الوقت الفعلي من فايربيز (لعرض العد القديم والـ 10 لايكات)
+    onSnapshot(projectRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            likesSpan.textContent = data.likes || 0;
         } else {
-            currentLikes--;
-            button.classList.remove('liked');
-            localStorage.removeItem(`liked_${projectId}`);
+            likesSpan.textContent = 0;
         }
-        
-        likesSpan.textContent = currentLikes;
-        localStorage.setItem(`like_${projectId}`, currentLikes);
+    }, (error) => {
+        console.error("Error fetching project likes: ", error);
+    });
 
-        // Background sync to Firebase
+    // تحديث اللايك عند الضغط وحفظه في فايربيز مباشرة
+    button.addEventListener('click', async () => {
         try {
-            const projectRef = doc(db, "projects_likes", projectId);
             const snap = await getDoc(projectRef);
+            let currentLikes = 0;
+            
             if (snap.exists()) {
-                await updateDoc(projectRef, { likes: currentLikes });
+                currentLikes = snap.data().likes || 0;
+            }
+
+            let newLikes;
+            if (!button.classList.contains('liked')) {
+                newLikes = currentLikes + 1;
+                button.classList.add('liked');
+            } else {
+                newLikes = Math.max(0, currentLikes - 1);
+                button.classList.remove('liked');
+            }
+
+            if (snap.exists()) {
+                await updateDoc(projectRef, { likes: newLikes });
             } else {
                 import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async ({ setDoc }) => {
-                    await setDoc(projectRef, { likes: currentLikes });
+                    await setDoc(projectRef, { likes: newLikes });
                 });
             }
-        } catch (e) {
-            console.log("Firebase sync background note: saved locally.");
+        } catch (error) {
+            console.error("Error updating project like: ", error);
         }
     });
 });
@@ -164,7 +166,7 @@ if (commentForm) {
     });
 }
 
-// Real-time Comments Fetching (Reads all comments without restrictive sorting to ensure old ones appear)
+// Real-time Comments Fetching (Reads all comments without restrictive sorting)
 try {
     const commentsRef = collection(db, "comments");
     onSnapshot(commentsRef, (snapshot) => {
