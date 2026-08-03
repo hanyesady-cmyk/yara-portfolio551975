@@ -9,7 +9,6 @@
     --purple: #8a2be2;
     --blue: #1e90ff;
     --cyan: #00ffff;
-    --hover-gradient: linear-gradient(45deg, #8a2be2, #1e90ff, #00ffff);
 }
 
 *{
@@ -60,10 +59,13 @@ nav{
     letter-spacing: -0.5px;
 }
 
+/* أنيميشن ألوان متحركة للوجو */
 .logo span{
-    background: linear-gradient(90deg, var(--purple), var(--blue), var(--cyan));
+    background: linear-gradient(270deg, var(--purple), var(--blue), var(--cyan), var(--purple));
+    background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: gradientShift 6s ease infinite;
 }
 
 nav ul{
@@ -139,11 +141,11 @@ nav ul li a:hover, nav ul li a.active{
     font-size: 16px;
     line-height: 1.6;
     color: var(--text-muted);
-    margin-bottom: 30px;
+    margin-bottom: 35px; /* مسافة ممتازة بين البراجراف والزراير */
     max-width: 500px;
 }
 
-.buttons{ display: flex; gap: 15px; }
+.buttons{ display: flex; gap: 15px; margin-top: 10px; }
 
 .btn, .btn2{
     padding: 12px 28px;
@@ -183,12 +185,24 @@ nav ul li a:hover, nav ul li a.active{
     box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
 }
 
-/* SECTIONS DESIGN */
+/* SECTIONS DESIGN & COLOR ANIMATION */
 .section-title{
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 800;
     text-align: center;
     margin-bottom: 10px;
+    /* أنيميشن ألوان متحركة لعناوين الأقسام الرئيسية */
+    background: linear-gradient(270deg, var(--purple), var(--blue), var(--cyan), var(--purple));
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .section-desc{
@@ -219,32 +233,100 @@ nav ul li a:hover, nav ul li a.active{
 }
 
 .skill-card i{ font-size: 30px; color: var(--cyan); margin-bottom: 15px; }
-.skill-card h3{ font-size: 18px; margin-bottom: 10px; }
+.skill-card h3{ font-size: 18px; margin-bottom: 10px; color: var(--text-main); }
 .skill-card p{ font-size: 14px; color: var(--text-muted); line-height: 1.6; }
 
-/* PROJECTS SECTION */
+/* PROJECTS SECTION (Cards) */
 .projects-container{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
 }
 
 .project-card{
     background: var(--card-bg);
-    border-radius: 15px;
+    border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border-color);
     transition: 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 
 .project-card:hover{
-    transform: translateY(-5px);
+    transform: translateY(-6px);
     border-color: var(--purple);
+    box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
 }
 
-.project-image{ width: 100%; height: 200px; background-color: #333; }
-.project-card h3{ font-size: 18px; padding: 20px 20px 10px 20px; }
-.project-card p{ font-size: 14px; color: var(--text-muted); padding: 0 20px 20px 20px; }
+.project-image-container {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+    background: #111;
+}
+
+.project-image-container img, 
+.project-image-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.4s ease;
+}
+
+.project-card:hover .project-image-container img {
+    transform: scale(1.05);
+}
+
+.project-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.project-card h3{ 
+    font-size: 18px; 
+    color: var(--text-main);
+}
+
+.project-card p{ 
+    font-size: 14px; 
+    color: var(--text-muted); 
+    line-height: 1.5;
+}
+
+.project-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.2);
+}
+
+.project-like {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.3s;
+}
+
+.project-like:hover {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.project-like i { color: #ff4d4d; }
 
 /* COMMENTS SYSTEM */
 .comment-form {
@@ -321,14 +403,13 @@ nav ul li a:hover, nav ul li a.active{
     color: var(--cyan);
 }
 
-.comment-info h3 { font-size: 16px; }
+.comment-info h3 { font-size: 16px; color: var(--text-main); }
 .comment-date { font-size: 12px; color: var(--text-muted); }
 .comment-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;}
 
-/* أزرار التعديل والحذف الخاصة بصاحب الكومنت (من نفس الجهاز) */
 .comment-owner-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
 }
 
 .edit-btn, .delete-btn {
@@ -337,7 +418,6 @@ nav ul li a:hover, nav ul li a.active{
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
-    padding: 0;
     transition: 0.3s;
 }
 
@@ -347,7 +427,7 @@ nav ul li a:hover, nav ul li a.active{
 .edit-btn:hover { color: #00ffffcc; }
 .delete-btn:hover { color: #ff4d4dcc; }
 
-/* RESPONSIVE - ترتيب الموبايل */
+/* RESPONSIVE */
 @media(max-width: 768px){
     #menuBtn{ display: block; }
     nav ul{
@@ -367,27 +447,15 @@ nav ul li a:hover, nav ul li a.active{
     }
     .right-nav button{ display: none; }
 
-    /* 🎯 جعل الكونتنت الأول ثم الصورة في قسم الهيرو 🎯 */
-    .hero{
-        flex-direction: column-reverse; /* الكونتنت تحت، الصورة فوق (نغيرها لـ column) */
-    }
-
-    /* الحل الصحيح: نجبر الكونتنت ييجي الأول وبعدين الصورة */
     .hero{
         display: flex;
-        flex-direction: column; /* Content (order 1) ثم Image (order 2) */
+        flex-direction: column;
         text-align: center;
         padding-top: 120px;
     }
 
-    .content {
-        order: 1; /* النص الأول */
-    }
-
-    .image {
-        order: 2; /* الصورة التحت */
-        margin-bottom: 30px;
-    }
+    .content { order: 1; }
+    .image { order: 2; margin-bottom: 30px; }
     
     .content h1{ font-size: 36px; }
     .buttons{ justify-content: center; }
