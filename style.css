@@ -135,7 +135,7 @@ nav ul li a:hover, nav ul li a.active{
     color: var(--text-main);
 }
 
-/* HERO SECTION - الكونتنت الكبير فوق والصورة تحته */
+/* HERO SECTION - الكونتنت فوق وتحته الصورة في الموبايل والديسكتوب */
 .hero{
     min-height: 100vh;
     display: flex;
@@ -189,13 +189,6 @@ nav ul li a:hover, nav ul li a.active{
     color: var(--text-muted);
 }
 
-.hero-skills{
-    font-size: 16px;
-    color: var(--bs-purple-light);
-    margin-bottom: 35px;
-    font-weight: 700;
-}
-
 .buttons{ 
     display: flex; 
     gap: 16px; 
@@ -236,7 +229,7 @@ nav ul li a:hover, nav ul li a.active{
     transform: translateY(-3px);
 }
 
-/* IMAGE SECTION - تحت الكونتنت */
+/* IMAGE SECTION - تحت الكونتنت مباشرة */
 .image{
     width: 100%;
     display: flex;
@@ -257,24 +250,6 @@ nav ul li a:hover, nav ul li a.active{
     backdrop-filter: blur(10px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
     animation: floatImage 4s ease-in-out infinite;
-}
-
-/* SECTIONS, SKILLS, PROJECTS (تنسيقات الأقسام المعتادة) */
-.section-title{
-    text-align: center;
-    font-size: 38px;
-    font-weight: 800;
-    margin-bottom: 15px;
-    color: #ffffff;
-    animation: titleGlow 5s ease-in-out infinite;
-}
-
-.section-desc{
-    max-width: 600px;
-    margin: 0 auto 50px;
-    text-align: center;
-    font-size: 16px;
-    color: var(--text-muted);
 }
 
 /* COMMENTS SYSTEM STYLING */
@@ -303,19 +278,6 @@ nav ul li a:hover, nav ul li a.active{
 }
 
 .comment-form textarea { height: 100px; resize: none; }
-
-.btn-submit {
-    padding: 12px 28px;
-    border: none;
-    border-radius: 8px;
-    background: var(--bs-purple);
-    color: #ffffff;
-    font-weight: 700;
-    cursor: pointer;
-    align-self: flex-start;
-    transition: 0.3s;
-}
-.btn-submit:hover { background: var(--bs-purple-light); }
 
 .comments-container {
     max-width: 750px;
@@ -361,14 +323,14 @@ nav ul li a:hover, nav ul li a.active{
 .comment-date { font-size: 12px; color: var(--text-muted); }
 .comment-text { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin-bottom: 15px; }
 
-/* 🛠️ أزرار التعديل والحذف الخاصة بصاحب الكومنت فقط */
+/* أزرار التعديل والحذف الخاصة بصاحب الكومنت فقط */
 .comment-owner-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .edit-comment-btn, .delete-comment-btn {
-    padding: 6px 14px;
+    padding: 5px 12px;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
