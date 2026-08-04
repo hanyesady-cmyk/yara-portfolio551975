@@ -123,11 +123,15 @@ document.addEventListener("keydown", (e) => {
 // ================= PROJECT LIKES =================
 async function initializeProjects() {
     document.querySelectorAll(".project-like").forEach(async (button) => {
-        const id = button.dataset.id;
-        const ref = doc(db, "projects", id);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
-            await setDoc(ref, { likes: 0 });
+        try {
+            const id = button.dataset.id;
+            const ref = doc(db, "projects", id);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+                await setDoc(ref, { likes: 0 });
+            }
+        } catch (err) {
+            console.error("Error initializing project:", err);
         }
     });
 }
@@ -141,18 +145,24 @@ onSnapshot(collection(db, "projects"), (snapshot) => {
             likeSpan.textContent = data.likes || 0;
         }
     });
+}, (error) => {
+    console.error("Projects snapshot error:", error);
 });
 
 document.querySelectorAll(".project-like").forEach(button => {
     button.addEventListener("click", async () => {
-        const id = button.dataset.id;
-        const storageKey = "liked_" + id;
-        if (localStorage.getItem(storageKey)) {
-            alert("You already liked this project ❤️");
-            return;
+        try {
+            const id = button.dataset.id;
+            const storageKey = "liked_" + id;
+            if (localStorage.getItem(storageKey)) {
+                alert("You already liked this project ❤️");
+                return;
+            }
+            await updateDoc(doc(db, "projects", id), { likes: increment(1) });
+            localStorage.setItem(storageKey, "true");
+        } catch (err) {
+            console.error("Error liking project:", err);
         }
-        await updateDoc(doc(db, "projects", id), { likes: increment(1) });
-        localStorage.setItem(storageKey, "true");
     });
 });
 
@@ -163,11 +173,10 @@ const commentForm = document.getElementById("commentForm");
 const commentName = document.getElementById("commentName");
 const commentMessage = document.getElementById("commentMessage");
 
-// التحقق من وجود اسم مستخدم محفوظ مسبقاً لهذا الجهاز وتثبيته
 const savedUsername = localStorage.getItem("portfolio_username");
 if (savedUsername && commentName) {
     commentName.value = savedUsername;
-    commentName.readOnly = true; // جعل الحقل غير قابل للتعديل لضمان ثباته
+    commentName.readOnly = true;
 }
 
 if (commentForm) {
@@ -178,30 +187,40 @@ if (commentForm) {
 
         const enteredName = commentName.value.trim();
 
-        // حفظ الاسم في localStorage للمرة الأولى إذا لم يكن موجوداً
         if (!localStorage.getItem("portfolio_username")) {
             localStorage.setItem("portfolio_username", enteredName);
             commentName.readOnly = true;
         }
 
-        await addDoc(commentsRef, {
-            name: enteredName,
-            message: commentMessage.value.trim(),
-            likes: 0,
-            userId: currentUserId,
-            createdAt: serverTimestamp()
-        });
-
-        commentMessage.value = "";
+        try {
+            await addDoc(commentsRef, {
+                name: enteredName,
+                message: commentMessage.value.trim(),
+                likes: 0,
+                userId: currentUserId,
+                createdAt: serverTimestamp()
+            });
+            commentMessage.value = "";
+        } catch (err) {
+            console.error("Error adding comment:", err);
+            alert("Failed to post comment. Check your connection.");
+        }
     });
 }
 
 if (commentsContainer) {
     onSnapshot(query(commentsRef, orderBy("createdAt", "desc")), (snapshot) => {
         commentsContainer.innerHTML = "";
+        if (snapshot.empty) {
+            commentsContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:20px;">No comments yet. Be the first!</p>`;
+            return;
+        }
         snapshot.forEach(commentDoc => {
             createCommentUI(commentDoc);
         });
+    }, (error) => {
+        console.error("Comments snapshot error: ", error);
+        commentsContainer.innerHTML = `<p style="color:#d9534f; text-align:center; padding:20px;">Failed to load comments. Please check your internet connection or QUIC settings.</p>`;
     });
 }
 
@@ -212,8 +231,6 @@ function createCommentUI(commentDoc) {
     card.className = "comment-card scroll-reveal show";
 
     const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
-    
-    // التحقق المباشر من أن الـ userId الخاص بالتعليق يطابق معرف هذا الجهاز
     const isOwner = data.userId === currentUserId;
 
     card.innerHTML = `
@@ -269,8 +286,12 @@ function setupCommentEvents(commentId) {
                 alert("You already liked this comment ❤️");
                 return;
             }
-            await updateDoc(doc(db, "comments", commentId), { likes: increment(1) });
-            localStorage.setItem(likeKey, "true");
+            try {
+                await updateDoc(doc(db, "comments", commentId), { likes: increment(1) });
+                localStorage.setItem(likeKey, "true");
+            } catch (err) {
+                console.error("Error liking comment:", err);
+            }
         });
     }
 
@@ -288,7 +309,11 @@ function setupCommentEvents(commentId) {
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async () => {
             if (confirm("Are you sure you want to delete this comment?")) {
-                await deleteDoc(doc(db, "comments", commentId));
+                try {
+                    await deleteDoc(doc(db, "comments", commentId));
+                } catch (err) {
+                    console.error("Error deleting comment:", err);
+                }
             }
         });
     }
@@ -310,9 +335,13 @@ function setupCommentEvents(commentId) {
             if (!editMsgInput) return;
             const newText = editMsgInput.value.trim();
             if (!newText) return;
-            await updateDoc(doc(db, "comments", commentId), { message: newText });
-            const editBox = document.getElementById(`editBox-${commentId}`);
-            if (editBox) editBox.style.display = "none";
+            try {
+                await updateDoc(doc(db, "comments", commentId), { message: newText });
+                const editBox = document.getElementById(`editBox-${commentId}`);
+                if (editBox) editBox.style.display = "none";
+            } catch (err) {
+                console.error("Error saving comment edit:", err);
+            }
         });
     }
 
@@ -325,18 +354,22 @@ function setupCommentEvents(commentId) {
             if (!nameInput || !msgInput) return;
             if (!nameInput.value.trim() || !msgInput.value.trim()) return;
 
-            const repliesRef = collection(db, "comments", commentId, "replies");
-            await addDoc(repliesRef, {
-                name: nameInput.value.trim(),
-                message: msgInput.value.trim(),
-                likes: 0,
-                userId: currentUserId,
-                createdAt: serverTimestamp()
-            });
+            try {
+                const repliesRef = collection(db, "comments", commentId, "replies");
+                await addDoc(repliesRef, {
+                    name: nameInput.value.trim(),
+                    message: msgInput.value.trim(),
+                    likes: 0,
+                    userId: currentUserId,
+                    createdAt: serverTimestamp()
+                });
 
-            msgInput.value = "";
-            const replyBox = document.getElementById(`replyBox-${commentId}`);
-            if (replyBox) replyBox.style.display = "none";
+                msgInput.value = "";
+                const replyBox = document.getElementById(`replyBox-${commentId}`);
+                if (replyBox) replyBox.style.display = "none";
+            } catch (err) {
+                console.error("Error sending reply:", err);
+            }
         });
     }
 }
@@ -351,8 +384,6 @@ function loadReplies(commentId) {
         snapshot.forEach(replyDoc => {
             const rData = replyDoc.data();
             const rId = replyDoc.id;
-            
-            // التحقق المباشر من أن الرد يتبع لنفس الجهاز الحالي
             const isReplyOwner = rData.userId === currentUserId;
 
             const replyDiv = document.createElement("div");
@@ -384,6 +415,8 @@ function loadReplies(commentId) {
         });
 
         setupReplyEvents(commentId);
+    }, (error) => {
+        console.error("Replies snapshot error:", error);
     });
 }
 
@@ -399,9 +432,13 @@ function setupReplyEvents(commentId) {
                 alert("You already liked this reply ❤️");
                 return;
             }
-            const replyRef = doc(db, "comments", commentId, "replies", rId);
-            await updateDoc(replyRef, { likes: increment(1) });
-            localStorage.setItem(likeKey, "true");
+            try {
+                const replyRef = doc(db, "comments", commentId, "replies", rId);
+                await updateDoc(replyRef, { likes: increment(1) });
+                localStorage.setItem(likeKey, "true");
+            } catch (err) {
+                console.error("Error liking reply:", err);
+            }
         };
     });
 
@@ -409,7 +446,11 @@ function setupReplyEvents(commentId) {
         btn.onclick = async () => {
             const rId = btn.dataset.rid;
             if (confirm("Delete this reply?")) {
-                await deleteDoc(doc(db, "comments", commentId, "replies", rId));
+                try {
+                    await deleteDoc(doc(db, "comments", commentId, "replies", rId));
+                } catch (err) {
+                    console.error("Error deleting reply:", err);
+                }
             }
         };
     });
@@ -431,10 +472,14 @@ function setupReplyEvents(commentId) {
             if (!inputEl) return;
             const newMsg = inputEl.value.trim();
             if (!newMsg) return;
-            const replyRef = doc(db, "comments", commentId, "replies", rId);
-            await updateDoc(replyRef, { message: newMsg });
-            const editBox = document.getElementById(`editReplyBox-${rId}`);
-            if (editBox) editBox.style.display = "none";
+            try {
+                const replyRef = doc(db, "comments", commentId, "replies", rId);
+                await updateDoc(replyRef, { message: newMsg });
+                const editBox = document.getElementById(`editReplyBox-${rId}`);
+                if (editBox) editBox.style.display = "none";
+            } catch (err) {
+                console.error("Error saving reply edit:", err);
+            }
         };
     });
 }
