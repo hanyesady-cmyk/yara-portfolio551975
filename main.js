@@ -22,15 +22,15 @@ window.addEventListener('DOMContentLoaded', () => {
         userNameInput.disabled = true;
     }
 
+    // جلب عدد اللايكات للمشاريع بالاسم الصحيح للمستندات (project1, project2, project3)
     ['1', '2', '3'].forEach(id => {
-        const docRef = doc(db, "projects", "project_" + id);
+        const docRef = doc(db, "projects", "project" + id);
         onSnapshot(docRef, (docSnap) => {
             const btn = document.getElementById('projectBtn_' + id);
             if (btn) {
                 let likesCount = 0;
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // قراءة قيمة اللايكات أياً كانت مسمياتها في الداتا بيز
                     likesCount = data.likes !== undefined ? data.likes : (data.like !== undefined ? data.like : 0);
                 }
                 btn.innerText = `❤️ ${likesCount} Likes`;
@@ -194,13 +194,14 @@ window.deleteComment = async function(commentId) {
     }
 };
 
+// دالة الاعجاب بالمشروع متوافقة مع الـ Document IDs (project1, project2, project3)
 window.likeProject = async function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
         alert("لقد قمت بالاعجاب بهذا المشروع مسبقاً!");
         return;
     }
-    const projectRef = doc(db, "projects", "project_" + projectId);
+    const projectRef = doc(db, "projects", "project" + projectId);
     const docSnap = await getDoc(projectRef);
     
     if (!docSnap.exists()) {
