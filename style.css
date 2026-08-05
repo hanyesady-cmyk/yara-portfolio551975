@@ -19,6 +19,7 @@ body {
     scroll-behavior: smooth;
 }
 
+/* NAVBAR */
 nav {
     display: flex;
     justify-content: space-between;
@@ -70,39 +71,77 @@ nav ul li a.active, nav ul li a:hover {
     background: var(--bs-purple);
 }
 
-#menuBtn {
-    display: none;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-}
-
+/* SECTIONS & ANIMATIONS */
 section {
-    padding: 100px 8% 50px 8%;
+    padding: 130px 8% 80px 8%;
     min-height: 100vh;
 }
 
-h2 {
-    font-size: 32px;
-    margin-bottom: 30px;
-    color: var(--text-color);
+@keyframes titleAnimation {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
+/* عناوين الصفحات في منتصف الصفحة مع أنيميشن شيك */
+section h2 {
+    font-size: 40px;
+    margin-bottom: 40px;
+    color: var(--text-color);
+    text-align: center;
+    animation: titleAnimation 1s ease-out forwards;
+}
+
+/* HOME SECTION */
+#home {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.home-content h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+    animation: titleAnimation 0.8s ease-out forwards;
+}
+
+.home-content p {
+    font-size: 20px;
+    color: var(--text-muted);
+}
+
+.home-image img {
+    width: 280px;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--bs-purple);
+    box-shadow: 0 0 25px rgba(111, 66, 193, 0.4);
+    animation: titleAnimation 1.2s ease-out forwards;
+}
+
+/* SKILLS */
 .skills-container {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .skills-container span {
     background: rgba(255, 255, 255, 0.05);
-    padding: 10px 20px;
+    padding: 12px 24px;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* PROJECTS GRID */
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -111,17 +150,38 @@ h2 {
 
 .project-card {
     background: rgba(255, 255, 255, 0.03);
-    padding: 20px;
+    padding: 25px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
+.project-card button {
+    padding: 8px 16px;
+    background: var(--bs-purple);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    width: fit-content;
+    transition: 0.3s;
+}
+
+.project-card button:hover {
+    background: var(--bs-cyan);
+    color: #000;
+}
+
+/* COMMENTS */
 #commentForm {
     display: flex;
     flex-direction: column;
     gap: 15px;
     max-width: 600px;
-    margin-bottom: 40px;
+    margin: 0 auto 40px auto;
 }
 
 #commentForm input, #commentForm textarea {
@@ -130,6 +190,7 @@ h2 {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #fff;
+    outline: none;
 }
 
 #commentForm button {
@@ -140,6 +201,7 @@ h2 {
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
+    width: fit-content;
 }
 
 .comment-card {
@@ -174,8 +236,7 @@ h2 {
 }
 
 .comment-text {
-    color: var(--text-muted);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .comment-actions {
@@ -184,28 +245,12 @@ h2 {
     align-items: center;
 }
 
-.comment-actions button {
-    background: none;
-    border: none;
-    color: var(--bs-cyan);
-    cursor: pointer;
-    font-size: 13px;
+/* CONTACT */
+#contact {
+    text-align: center;
 }
 
-.replies {
-    margin-top: 15px;
-    padding-left: 20px;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.reply {
-    margin-top: 10px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-}
-
-/* Modal */
+/* MODAL */
 .modal {
     display: none;
     position: fixed;
@@ -213,7 +258,7 @@ h2 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     justify-content: center;
     align-items: center;
     z-index: 2000;
@@ -243,22 +288,13 @@ h2 {
     cursor: pointer;
 }
 
+/* RESPONSIVE */
 @media (max-width: 768px) {
+    #home {
+        flex-direction: column-reverse;
+        text-align: center;
+    }
     nav ul {
         display: none;
-        flex-direction: column;
-        position: absolute;
-        top: 70px;
-        left: 0;
-        width: 100%;
-        background: var(--bg-color);
-        padding: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    nav ul.active {
-        display: flex;
-    }
-    #menuBtn {
-        display: block;
     }
 }
