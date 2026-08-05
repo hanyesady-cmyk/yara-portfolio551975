@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, increment, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getDatabase, ref, push, onValue, update, increment, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
@@ -7,11 +7,12 @@ const firebaseConfig = {
     projectId: "ga-for-windows-99879",
     storageBucket: "ga-for-windows-99879.firebasestorage.app",
     messagingSenderId: "590172219222",
-    appId: "1:590172219222:web:0202ac673e26a56c1a58f7"
+    appId: "1:590172219222:web:0202ac673e26a56c1a58f7",
+    databaseURL: "https://ga-for-windows-99879-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getDatabase(app);
 
 window.addEventListener('DOMContentLoaded', () => {
     const userNameInput = document.getElementById('userName');
@@ -22,16 +23,15 @@ window.addEventListener('DOMContentLoaded', () => {
         userNameInput.disabled = true;
     }
 
+    // جلب لايكات المشاريع بطريقة سليمة تبدأ من 20 لو مش متسجلة
     ['1', '2', '3'].forEach(id => {
-        const docRef = doc(db, "projects", "project_" + id);
-        onSnapshot(docRef, (docSnap) => {
+        const projectLikeRef = ref(db, `projects/project_${id}/likes`);
+        onValue(projectLikeRef, (snapshot) => {
+            const likesCount = snapshot.val();
             const btn = document.getElementById('projectBtn_' + id);
             if (btn) {
-                let likesCount = 20;
-                if (docSnap.exists() && docSnap.data().likes !== undefined) {
-                    likesCount = docSnap.data().likes;
-                }
-                btn.innerText = `❤️ ${likesCount} Likes`;
+                const finalLikes = (likesCount !== null && likesCount !== undefined) ? likesCount : 20;
+                btn.innerText = `❤️ ${finalLikes} Likes`;
             }
         });
     });
@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 const commentForm = document.getElementById('commentForm');
 if (commentForm) {
-    commentForm.addEventListener('submit', async (e) => {
+    commentForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const userNameInput = document.getElementById('userName');
         let userName = localStorage.getItem('portfolio_username');
@@ -55,78 +55,91 @@ if (commentForm) {
         const commentText = document.getElementById('commentText').value.trim();
         if (!commentText || !userName) return;
         
-        try {
-            await addDoc(collection(db, "comments"), {
-                name: userName,
-                text: commentText,
-                timestamp: new Date().toLocaleString(),
-                likes: 0
-            });
+        const commentsRef = ref(db, 'comments');
+        push(commentsRef, {
+            name: userName,
+            text: commentText,
+            timestamp: new Date().toLocaleString(),
+            likes: 0
+        }).then(() => {
             document.getElementById('commentText').value = '';
-        } catch (error) {
-            console.error("Error adding comment: ", error);
-        }
+        });
     });
 
-    onSnapshot(collection(db, "comments"), (snapshot) => {
+    const commentsRef = ref(db, 'comments');
+    onValue(commentsRef, (snapshot) => {
         const commentsList = document.getElementById('commentsList');
         if (!commentsList) return;
         commentsList.innerHTML = '';
         
-        snapshot.forEach((docSnap) => {
-            const comment = docSnap.data();
-            const commentId = docSnap.id;
-            const firstLetter = comment.name ? comment.name.charAt(0).toUpperCase() : 'Y';
-            
-            let repliesHTML = '';
-            if (comment.replies && Array.isArray(comment.replies)) {
-                comment.replies.forEach(reply => {
-                    repliesHTML += `
-                        <div class="reply-item">
-                            <strong>${reply.name}:</strong> ${reply.text}
-                        </div>
-                    `;
-                });
-            }
+        const data = snapshot.val();
+        if (data) {
+            Object.keys(data).forEach((key) => {
+                const comment = data[key];
+                const authorName = comment.name || comment.userName || "User";
+                const firstLetter = authorName.charAt(0).toUpperCase();
+                
+                // معالجة النص سواء كان مسجل تحت text أو comment
+                const commentBody = comment.text || comment.comment || "No content";
+                
+                // معالجة التاريخ القديم أو الجديد
+                let commentDate = comment.timestamp || "Recent";
+                if (typeof commentDate === 'object') {
+                    commentDate = "Recent";
+                }
 
-            const commentElement = document.createElement('div');
-            commentElement.className = 'comment-card';
-            commentElement.innerHTML = `
-                <div class="comment-header">
-                    <div class="avatar">${firstLetter}</div>
-                    <div>
-                        <strong>${comment.name}</strong>
-                        <div class="comment-date">${comment.timestamp}</div>
+                let repliesHTML = '';
+                if (comment.replies) {
+                    Object.keys(comment.replies).forEach(replyKey => {
+                        const reply = comment.replies[replyKey];
+                        repliesHTML += `
+                            <div class="reply-item">
+                                <strong>${reply.name}:</strong> ${reply.text}
+                            </div>
+                        `;
+                    });
+                }
+
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment-card';
+                commentElement.innerHTML = `
+                    <div class="comment-header">
+                        <div class="avatar">${firstLetter}</div>
+                        <div>
+                            <strong>${authorName}</strong>
+                            <div class="comment-date">${commentDate}</div>
+                        </div>
                     </div>
-                </div>
-                <div class="comment-text">${comment.text}</div>
-                <div class="comment-actions">
-                    <button onclick="likeComment('${commentId}')">❤️ ${comment.likes || 0} Likes</button>
-                    <button onclick="toggleReplyForm('${commentId}')">💬 Reply</button>
-                    <button onclick="deleteComment('${commentId}')" style="color: #ff4d4d;">🗑️ Delete</button>
-                </div>
-                <div id="repliesContainer_${commentId}" class="replies-container" style="${comment.replies && comment.replies.length > 0 ? '' : 'display:none;'}">
-                    ${repliesHTML}
-                </div>
-                <div id="replyForm_${commentId}" class="reply-form" style="display:none;">
-                    <input type="text" id="replyInput_${commentId}" placeholder="Write a reply...">
-                    <button onclick="submitReply('${commentId}')">Send</button>
-                </div>
-            `;
-            commentsList.appendChild(commentElement);
-        });
+                    <div class="comment-text">${commentBody}</div>
+                    <div class="comment-actions">
+                        <button onclick="likeComment('${key}')">❤️ ${comment.likes || 0} Likes</button>
+                        <button onclick="toggleReplyForm('${key}')">💬 Reply</button>
+                        <button onclick="deleteComment('${key}')" style="color: #ff4d4d;">🗑️ Delete</button>
+                    </div>
+                    <div id="repliesContainer_${key}" class="replies-container" style="${comment.replies ? '' : 'display:none;'}">
+                        ${repliesHTML}
+                    </div>
+                    <div id="replyForm_${key}" class="reply-form" style="display:none;">
+                        <input type="text" id="replyInput_${key}" placeholder="Write a reply...">
+                        <button onclick="submitReply('${key}')">Send</button>
+                    </div>
+                `;
+                commentsList.appendChild(commentElement);
+            });
+        }
     });
 }
 
-window.likeComment = async function(commentId) {
+window.likeComment = function(commentId) {
     const likedKey = 'liked_comment_' + commentId;
     if (localStorage.getItem(likedKey)) {
         alert("لقد قمت بالاعجاب بهذا التعليق مسبقاً!");
         return;
     }
-    const commentRef = doc(db, "comments", commentId);
-    await updateDoc(commentRef, { likes: increment(1) });
-    localStorage.setItem(likedKey, 'true');
+    const commentRef = ref(db, 'comments/' + commentId);
+    update(commentRef, { likes: increment(1) }).then(() => {
+        localStorage.setItem(likedKey, 'true');
+    });
 };
 
 window.toggleReplyForm = function(commentId) {
@@ -136,7 +149,7 @@ window.toggleReplyForm = function(commentId) {
     }
 };
 
-window.submitReply = async function(commentId) {
+window.submitReply = function(commentId) {
     const replyInput = document.getElementById('replyInput_' + commentId);
     const replyText = replyInput.value.trim();
     let userName = localStorage.getItem('portfolio_username');
@@ -147,43 +160,45 @@ window.submitReply = async function(commentId) {
     }
     if (!replyText) return;
 
-    const commentRef = doc(db, "comments", commentId);
-    const docSnap = await getDoc(commentRef);
-    if (docSnap.exists()) {
-        const commentData = docSnap.data();
-        const replies = commentData.replies || [];
-        replies.push({
-            name: userName,
-            text: replyText,
-            timestamp: new Date().toLocaleString()
-        });
-        await updateDoc(commentRef, { replies: replies });
+    const repliesRef = ref(db, `comments/${commentId}/replies`);
+    push(repliesRef, {
+        name: userName,
+        text: replyText,
+        timestamp: new Date().toLocaleString()
+    }).then(() => {
         replyInput.value = '';
         document.getElementById('replyForm_' + commentId).style.display = 'none';
-    }
+    });
 };
 
-window.deleteComment = async function(commentId) {
+window.deleteComment = function(commentId) {
     if (confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
-        await deleteDoc(doc(db, "comments", commentId));
+        remove(ref(db, 'comments/' + commentId));
     }
 };
 
-window.likeProject = async function(projectId) {
+window.likeProject = function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
         alert("لقد قمت بالاعجاب بهذا المشروع مسبقاً!");
         return;
     }
-    const projectRef = doc(db, "projects", "project_" + projectId);
-    const docSnap = await getDoc(projectRef);
     
-    if (!docSnap.exists()) {
-        await setDoc(projectRef, { likes: 1 });
-    } else {
-        await updateDoc(projectRef, { likes: increment(1) });
-    }
-    localStorage.setItem(likedKey, 'true');
+    const projectRef = ref(db, `projects/project_${projectId}`);
+    
+    // جلب القيمة الحالية وزيادتها بمقدار 1 بناءً على القيمة الصحيحة الحالية
+    onValue(projectRef, (snapshot) => {
+        const currentData = snapshot.val();
+        let currentLikes = 20;
+        
+        if (currentData !== null && currentData.likes !== undefined) {
+            currentLikes = Number(currentData.likes);
+        }
+        
+        update(projectRef, { likes: currentLikes + 1 }).then(() => {
+            localStorage.setItem(likedKey, 'true');
+        });
+    }, { onlyOnce: true });
 };
 
 window.openVideo = function(videoSrc) {
