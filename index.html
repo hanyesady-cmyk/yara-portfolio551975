@@ -11,15 +11,23 @@
 <body>
 
     <nav data-aos="fade-down" data-aos-duration="800">
-        <div class="logo">Yara Hub<span>.</span></div>
-        <ul>
+        <div class="logo">Yara<span>.</span></div>
+        
+        <!-- زر القائمة للموبايل -->
+        <div class="menu-toggle" id="mobile-menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <ul class="nav-list" id="nav-list">
             <li><a href="#home" class="active">Home</a></li>
             <li><a href="#skills">Skills</a></li>
             <li><a href="#projects">Projects</a></li>
             <li><a href="#comments">Comments</a></li>
             <li><a href="#contact">Contact</a></li>
         </ul>
-        <a href="#contact" class="hire-btn">Hire Me</a>
+        <a href="#contact" class="hire-btn desktop-hire">Hire Me</a>
     </nav>
 
     <section id="home" data-aos="fade-in" data-aos-duration="1200">
@@ -187,6 +195,25 @@
             </video>
         </div>
     </div>
+
+    <!-- كود بسيط لتشغيل قائمة الموبايل -->
+    <script>
+        const mobileMenu = document.getElementById('mobile-menu');
+        const navList = document.getElementById('nav-list');
+        if (mobileMenu && navList) {
+            mobileMenu.addEventListener('click', () => {
+                navList.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+            // إغلاق القائمة تلقائياً عند الضغط على أي رابط
+            document.querySelectorAll('.nav-list a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navList.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+        }
+    </script>
 
     <!-- تفعيل ملف JavaScript الخاص بـ AOS -->
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
