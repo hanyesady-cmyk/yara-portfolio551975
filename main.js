@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, update, increment, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// إعدادات فايربيس الصحيحة برابط الـ Database السليم (بدون مسافات)
+// إعدادات فايربيس برابط الـ Database المتطابق مع مشروعك
 const firebaseConfig = {
     apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
     authDomain: "ga-for-windows-99879.firebaseapp.com",
@@ -25,14 +25,15 @@ window.addEventListener('DOMContentLoaded', () => {
         userNameInput.disabled = true;
     }
 
-    // جلب لايكات المشاريع من قاعدة البيانات
+    // جلب لايكات المشاريع الحقيقية من قاعدة البيانات مباشرة
     ['1', '2', '3'].forEach(id => {
         const projectLikeRef = ref(db, `projects/project_${id}/likes`);
         onValue(projectLikeRef, (snapshot) => {
-            const likesCount = snapshot.val() || 20;
+            const likesCount = snapshot.val();
             const btn = document.getElementById('projectBtn_' + id);
             if (btn) {
-                btn.innerText = `❤️ ${likesCount} Likes`;
+                // إذا لم يتم تسجيل أي لايك بعد في قاعدة البيانات، يظهر 20 افتراضياً
+                btn.innerText = `❤️ ${likesCount !== null ? likesCount : 20} Likes`;
             }
         });
     });
@@ -127,7 +128,7 @@ if (commentForm) {
     });
 }
 
-// لايك للتعليق (مع منع تكرار اللايك من نفس المتصفح)
+// لايك للتعليق
 window.likeComment = function(commentId) {
     const likedKey = 'liked_comment_' + commentId;
     if (localStorage.getItem(likedKey)) {
@@ -183,7 +184,7 @@ window.deleteComment = function(commentId) {
     }
 };
 
-// لايكات المشاريع
+// لايكات المشاريع وحفظها في قاعدة البيانات بشكل دائم
 window.likeProject = function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
