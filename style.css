@@ -1,3 +1,4 @@
+/* General Styles */
 * {
     margin: 0;
     padding: 0;
@@ -11,6 +12,11 @@ body {
     color: #ffffff;
     line-height: 1.6;
     overflow-x: hidden;
+    /* التعديل هنا لضمان تمركز المحتوى العام ومنع أي إزاحة جانبية */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 
 /* Navbar */
@@ -77,11 +83,14 @@ nav ul li a:hover, nav ul li a.active {
 /* Home Section */
 #home {
     min-height: 100vh;
+    width: 100%;
+    max-width: 1400px; /* ضبط العرض الأقصى عشان الشاشات الكبيرة */
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 8%;
     padding-top: 80px;
+    margin: 0 auto; /* تثبيت العنصر في المنتصف تماماً */
 }
 
 .home-content {
@@ -162,23 +171,19 @@ nav ul li a:hover, nav ul li a.active {
     animation: floatImage 4s ease-in-out infinite;
 }
 
-/* تأثير الحركة العائمة للصورة لفوق ولتحت */
 @keyframes floatImage {
-    0% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-15px);
-    }
-    100% {
-        transform: translateY(0px);
-    }
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
 }
 
 /* Skills Section */
 #skills {
+    width: 100%;
+    max-width: 1400px;
     padding: 100px 8%;
     text-align: center;
+    margin: 0 auto;
 }
 
 #skills h2, #projects h2, #comments h2, #contact h2 {
@@ -212,6 +217,7 @@ nav ul li a:hover, nav ul li a.active {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
+    justify-content: center;
 }
 
 .skill-card {
@@ -266,14 +272,18 @@ nav ul li a:hover, nav ul li a.active {
 
 /* Projects Section */
 #projects {
+    width: 100%;
+    max-width: 1400px;
     padding: 100px 8%;
     text-align: center;
+    margin: 0 auto;
 }
 
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
+    justify-content: center;
 }
 
 .project-card {
@@ -348,8 +358,11 @@ nav ul li a:hover, nav ul li a.active {
 
 /* Comments Section */
 #comments {
+    width: 100%;
+    max-width: 1400px;
     padding: 100px 8%;
     text-align: center;
+    margin: 0 auto;
 }
 
 #commentForm {
@@ -489,8 +502,11 @@ nav ul li a:hover, nav ul li a.active {
 
 /* Contact Section */
 #contact {
+    width: 100%;
+    max-width: 1400px;
     padding: 100px 8%;
     text-align: center;
+    margin: 0 auto;
 }
 
 .contact-cards-container {
@@ -548,6 +564,7 @@ nav ul li a:hover, nav ul li a.active {
 
 /* Footer */
 footer {
+    width: 100%;
     text-align: center;
     padding: 30px;
     background: #070412;
@@ -606,10 +623,9 @@ footer span {
 }
 
 /* ========================================================
-   الإضافات الجديدة: أنيميشن اللوجو + التوافق مع الشاشات الصغيرة (Responsive)
+   أنيميشن اللوجو + التوافق مع الشاشات الصغيرة (Responsive)
    ======================================================== */
 
-/* 1. أنيميشن نبض أو توهج للوجو (Yara) */
 @keyframes logoPulse {
     0% {
         transform: scale(1);
@@ -629,13 +645,11 @@ footer span {
     animation: logoPulse 3s ease-in-out infinite;
 }
 
-/* 2. التوافق مع الشاشات الصغيرة والموبايل (Responsive Media Queries) */
 @media (max-width: 992px) {
     nav {
         padding: 15px 5%;
     }
     
-    /* إخفاء الروابط في الناف بار أو تصغيرها للشاشات المتوسطة والصغيرة */
     nav ul {
         gap: 15px;
     }
@@ -684,7 +698,6 @@ footer span {
 }
 
 @media (max-width: 768px) {
-    /* تصغير الناف بار للشاشات الصغيرة جداً */
     nav {
         flex-direction: column;
         gap: 10px;
@@ -698,7 +711,7 @@ footer span {
     }
 
     .hire-btn {
-        display: none; /* إخفاء زر Hire Me لتوفير مساحة، أو يمكنك إبقاؤه حسب رغبتك */
+        display: none;
     }
 
     #home {
