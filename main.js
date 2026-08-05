@@ -8,19 +8,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// تثبيت اسم المستخدم بحيث لا يمكن تغييره بعد الإدخال الأول
+// تثبيت اسم المستخدم (Username) وعدم إمكانية تغييره
 window.addEventListener('DOMContentLoaded', () => {
     const userNameInput = document.getElementById('userName');
     const savedUser = localStorage.getItem('portfolio_username');
     
     if (userNameInput && savedUser) {
         userNameInput.value = savedUser;
-        userNameInput.disabled = true; // قفل حقل الاسم نهائياً
+        userNameInput.disabled = true; // قفل الحقل نهائياً
     }
 
-    // تهيئة لايكات البروجيكتس
+    // استرجاع وعرض لايكات المشاريع من LocalStorage
     ['1', '2', '3'].forEach(id => {
-        let savedLikes = localStorage.getItem('project_' + id) || 20;
+        let savedLikes = localStorage.getItem('project_' + id) || 4;
         const btn = document.getElementById('projectBtn_' + id);
         if (btn) {
             btn.innerText = `❤️ ${savedLikes} Likes`;
@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// التعامل مع نموذج التعليقات وحفظ اسم المستخدم
+// التعامل مع إضافة التعليقات الرئيسية وحفظ الاسم
 const commentForm = document.getElementById('commentForm');
 if (commentForm) {
     commentForm.addEventListener('submit', (e) => {
@@ -57,7 +57,7 @@ if (commentForm) {
         });
     });
 
-    // جلب وعرض التعليقات
+    // جلب وعرض التعليقات والردود وتحديثها فورياً
     const commentsRef = ref(db, 'comments');
     onValue(commentsRef, (snapshot) => {
         const commentsList = document.getElementById('commentsList');
@@ -70,6 +70,19 @@ if (commentForm) {
                 const comment = data[key];
                 const firstLetter = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
                 
+                // بناء هيكل الردود (Replies) إن وجدت
+                let repliesHTML = '';
+                if (comment.replies) {
+                    Object.keys(comment.replies).forEach(replyKey => {
+                        const reply = comment.replies[replyKey];
+                        repliesHTML += `
+                            <div class="reply-item">
+                                <strong>${reply.name}:</strong> ${reply.text}
+                            </div>
+                        `;
+                    });
+                }
+
                 const commentElement = document.createElement('div');
                 commentElement.className = 'comment-card';
                 commentElement.innerHTML = `
@@ -82,8 +95,18 @@ if (commentForm) {
                     </div>
                     <div class="comment-text">${comment.text}</div>
                     <div class="comment-actions">
-                        <button onclick="likeComment('${key}')" style="background:var(--bs-purple); border:none; color:#fff; padding:5px 10px; border-radius:5px; cursor:pointer;">❤️ ${comment.likes || 0} Likes</button>
-                        <button onclick="deleteComment('${key}')" style="color: #ff4d4d; background: none; border: none; cursor: pointer; font-weight:bold;">🗑️ Delete</button>
+                        <button onclick="likeComment('${key}')">❤️ ${comment.likes || 0} Likes</button>
+                        <button onclick="toggleReplyForm('${key}')">💬 Reply</button>
+                        <button onclick="deleteComment('${key}')" style="color: #ff4d4d;">🗑️ Delete</button>
+                    </div>
+                    
+                    <div id="repliesContainer_${key}" class="replies-container" style="${comment.replies ? '' : 'display:none;'}">
+                        ${repliesHTML}
+                    </div>
+
+                    <div id="replyForm_${key}" class="reply-form" style="display:none;">
+                        <input type="text" id="replyInput_${key}" placeholder="Write a reply...">
+                        <button onclick="submitReply('${key}')">Send</button>
                     </div>
                 `;
                 commentsList.appendChild(commentElement);
@@ -108,6 +131,38 @@ window.likeComment = function(commentId) {
     });
 };
 
+// إظهار وإخفاء نموذج الرد
+window.toggleReplyForm = function(commentId) {
+    const form = document.getElementById('replyForm_' + commentId);
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+    }
+};
+
+// إضافة ريبلاي على كومنت (مع التحقق من تثبيت اليوزر)
+window.submitReply = function(commentId) {
+    const replyInput = document.getElementById('replyInput_' + commentId);
+    const replyText = replyInput.value.trim();
+    let userName = localStorage.getItem('portfolio_username');
+
+    if (!userName) {
+        alert("الرجاء كتابة اسمك في قسم التعليقات أولاً!");
+        return;
+    }
+
+    if (!replyText) return;
+
+    const repliesRef = ref(db, `comments/${commentId}/replies`);
+    push(repliesRef, {
+        name: userName,
+        text: replyText,
+        timestamp: new Date().toLocaleString()
+    }).then(() => {
+        replyInput.value = '';
+        document.getElementById('replyForm_' + commentId).style.display = 'none';
+    });
+};
+
 // دالة حذف التعليق
 window.deleteComment = function(commentId) {
     if (confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
@@ -116,7 +171,7 @@ window.deleteComment = function(commentId) {
     }
 };
 
-// لايكات البروجيكتس (منع تكرار اللايك)
+// لايكات البروجيكتس (مع منع التكرار)
 window.likeProject = function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
@@ -124,7 +179,7 @@ window.likeProject = function(projectId) {
         return;
     }
 
-    let likes = parseInt(localStorage.getItem('project_' + projectId) || 20) + 1;
+    let likes = parseInt(localStorage.getItem('project_' + projectId) || 4) + 1;
     localStorage.setItem('project_' + projectId, likes);
     localStorage.setItem(likedKey, 'true');
     
@@ -134,7 +189,7 @@ window.likeProject = function(projectId) {
     }
 };
 
-// دوال تشغيل وإغلاق الفيديوهات (Modal)
+// دوال فتح وغلق نافذة الفيديو (Modal)
 window.openVideo = function(videoSrc) {
     const modal = document.getElementById('videoModal');
     const video = document.getElementById('modalVideo');
