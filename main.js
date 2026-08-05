@@ -73,6 +73,8 @@ if (commentForm) {
         if (!commentsList) return;
         commentsList.innerHTML = '';
         
+        const currentUser = localStorage.getItem('portfolio_username');
+
         snapshot.forEach((docSnap) => {
             const comment = docSnap.data();
             const commentId = docSnap.id;
@@ -86,7 +88,6 @@ if (commentForm) {
                 commentDate = "Recent";
             }
 
-            // فحص جميع الاحتمالات الممكنة لحفظ الردود في الداتا القديمة
             let repliesList = comment.replies || comment.reply || comment.responses || [];
             let repliesHTML = '';
             
@@ -100,6 +101,12 @@ if (commentForm) {
                         </div>
                     `;
                 });
+            }
+
+            // التحقق مما إذا كان المستخدم الحالي هو صاحب التعليق لإظهار زر الحذف له فقط
+            let deleteButtonHTML = '';
+            if (currentUser && currentUser.trim().toLowerCase() === authorName.trim().toLowerCase()) {
+                deleteButtonHTML = `<button onclick="deleteComment('${commentId}')" style="color: #ff4d4d;">🗑️ Delete</button>`;
             }
 
             const commentElement = document.createElement('div');
@@ -116,7 +123,7 @@ if (commentForm) {
                 <div class="comment-actions">
                     <button onclick="likeComment('${commentId}')">❤️ ${comment.likes || 0} Likes</button>
                     <button onclick="toggleReplyForm('${commentId}')">💬 Reply</button>
-                    <button onclick="deleteComment('${commentId}')" style="color: #ff4d4d;">🗑️ Delete</button>
+                    ${deleteButtonHTML}
                 </div>
                 <div id="repliesContainer_${commentId}" class="replies-container" style="${repliesHTML ? '' : 'display:none;'}">
                     ${repliesHTML}
