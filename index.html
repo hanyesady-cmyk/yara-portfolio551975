@@ -6,11 +6,11 @@
     <title>Yara Hani | Full Stack Developer</title>
     <link rel="stylesheet" href="style.css">
     <!-- مكتبة AOS للأنيميشن -->
-<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 </head>
 <body>
 
-    <nav>
+    <nav data-aos="fade-down" data-aos-duration="800">
         <div class="logo">Yara<span>.</span></div>
         <ul>
             <li><a href="#home" class="active">Home</a></li>
@@ -22,8 +22,8 @@
         <a href="#contact" class="hire-btn">Hire Me</a>
     </nav>
 
-    <section id="home">
-        <div class="home-content">
+    <section id="home" data-aos="fade-in" data-aos-duration="1200">
+        <div class="home-content" data-aos="fade-right" data-aos-delay="200">
             <h1>Hi, I'm Yara Hani</h1>
             <h2>Full Stack Web Developer</h2>
             <p>I build modern, responsive and interactive web applications using HTML, CSS, JavaScript, React.js, Node.js, Express.js and Firebase. I enjoy creating beautiful interfaces with powerful backend solutions.</p>
@@ -35,56 +35,58 @@
                 <a href="#contact" class="btn-secondary">Contact Me</a>
             </div>
         </div>
-        <div class="home-image">
+        <div class="home-image" data-aos="fade-left" data-aos-delay="400">
             <img src="bbd3896a-7c65-4027-9643-ba959adce95d.png" alt="Yara Hani">
         </div>
     </section>
 
     <section id="skills">
-        <h2>My Skills</h2>
-        <p class="section-subtitle">I build complete Full Stack applications with modern technologies.</p>
+        <div data-aos="fade-up">
+            <h2>My Skills</h2>
+            <p class="section-subtitle">I build complete Full Stack applications with modern technologies.</p>
+        </div>
         <div class="skills-grid">
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="100">
                 <div class="skill-icon html-bg">5</div>
                 <h3>HTML5</h3>
                 <p>Semantic and SEO friendly structure.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="150">
                 <div class="skill-icon css-bg">CS</div>
                 <h3>CSS3</h3>
                 <p>Responsive layouts and modern UI.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="200">
                 <div class="skill-icon js-bg">JS</div>
                 <h3>JavaScript</h3>
                 <p>Interactive web applications.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="250">
                 <div class="skill-icon bootstrap-bg">B</div>
                 <h3>Bootstrap</h3>
                 <p>Reusable responsive components.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="300">
                 <div class="skill-icon react-bg">⚛</div>
                 <h3>React.js</h3>
                 <p>Reusable components and SPA apps.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="350">
                 <div class="skill-icon node-bg">N</div>
                 <h3>Node.js</h3>
                 <p>Server-side JavaScript environment.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="400">
                 <div class="skill-icon express-bg">E</div>
                 <h3>Express.js</h3>
                 <p>REST APIs and backend services.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="450">
                 <div class="skill-icon firebase-bg">🔥</div>
                 <h3>Firebase</h3>
                 <p>Realtime database and cloud services.</p>
             </div>
-            <div class="skill-card">
+            <div class="skill-card" data-aos="zoom-in" data-aos-delay="500">
                 <div class="skill-icon git-bg">git</div>
                 <h3>Git & GitHub</h3>
                 <p>Version control and deployment.</p>
@@ -93,10 +95,12 @@
     </section>
 
     <section id="projects">
-        <h2>My Projects</h2>
-        <p class="section-subtitle">Some of my recent Full Stack projects. Watch demos and interact with likes.</p>
+        <div data-aos="fade-up">
+            <h2>My Projects</h2>
+            <p class="section-subtitle">Some of my recent Full Stack projects. Watch demos and interact with likes.</p>
+        </div>
         <div class="projects-grid">
-            <div class="project-card">
+            <div class="project-card" data-aos="fade-up" data-aos-delay="100">
                 <video src="https://res.cloudinary.com/yerzxiba/video/upload/v1785705568/elegance_y1pwe0.mp4" muted preload="metadata" class="project-thumb"></video>
                 <div class="project-info">
                     <h3>Timeless Elegance</h3>
@@ -108,7 +112,7 @@
                 </div>
             </div>
 
-            <div class="project-card">
+            <div class="project-card" data-aos="fade-up" data-aos-delay="200">
                 <video src="https://res.cloudinary.com/yerzxiba/video/upload/v1785705342/Product_Showcase_-_Google_Chrome_2025-12-03_13-31-07_papzpo.mp4" muted preload="metadata" class="project-thumb"></video>
                 <div class="project-info">
                     <h3>Product Showcase</h3>
@@ -120,7 +124,7 @@
                 </div>
             </div>
 
-            <div class="project-card">
+            <div class="project-card" data-aos="fade-up" data-aos-delay="300">
                 <video src="https://res.cloudinary.com/yerzxiba/video/upload/v1785705514/WhatsApp_Video_2026-08-01_at_1.17.55_AM_vtkrid.mp4" muted preload="metadata" class="project-thumb"></video>
                 <div class="project-info">
                     <h3>Milify Website</h3>
@@ -134,11 +138,11 @@
         </div>
     </section>
 
-    <section id="comments">
+    <section id="comments" data-aos="fade-up">
         <h2>Community Comments</h2>
         <p class="section-subtitle">Share your opinion or leave a feedback!</p>
         
-        <form id="commentForm">
+        <form id="commentForm" data-aos="fade-up" data-aos-delay="100">
             <input type="text" id="userName" placeholder="Your Name" required>
             <textarea id="commentText" placeholder="Write your comment..." required></textarea>
             <button type="submit">Post Comment</button>
@@ -147,12 +151,12 @@
         <div id="commentsList"></div>
     </section>
 
-    <section id="contact">
+    <section id="contact" data-aos="fade-up">
         <h2>Contact Me</h2>
         <p class="section-subtitle">Let's work together! Feel free to contact me anytime.</p>
         
         <div class="contact-cards-container">
-            <div class="contact-card">
+            <div class="contact-card" data-aos="fade-right" data-aos-delay="100">
                 <div class="contact-icon">✉</div>
                 <div class="contact-details">
                     <span class="contact-title">Email</span>
@@ -160,18 +164,17 @@
                 </div>
             </div>
 
-            <div class="contact-card">
+            <div class="contact-card" data-aos="fade-left" data-aos-delay="200">
                 <div class="contact-icon">in</div>
                 <div class="contact-details">
                     <span class="contact-title">LinkedIn</span>
                     <a href="https://www.linkedin.com/in/yara-hany-1451693ab" target="_blank">LinkedIn Profile</a>
                 </div>
             </div>
-            </div>
         </div>
     </section>
 
-    <footer>
+    <footer data-aos="fade-in">
         <p>© 2026 All Rights Reserved | Designed & Developed by <span>Yara Hani</span></p>
     </footer>
 
@@ -185,6 +188,15 @@
         </div>
     </div>
 
+    <!-- تفعيل ملف JavaScript الخاص بـ AOS -->
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 80
+        });
+    </script>
     <script type="module" src="main.js"></script>
 </body>
 </html>
