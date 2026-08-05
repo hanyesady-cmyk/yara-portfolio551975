@@ -28,7 +28,6 @@
             <p>Full Stack Developer</p>
         </div>
         <div class="home-image">
-            <!-- حط اسم صورتك الشخصية هنا -->
             <img src="my-image.jpg" alt="Yara Hani">
         </div>
     </section>
@@ -52,11 +51,12 @@
         <div class="projects-grid">
             <div class="project-card">
                 <h3>Project One</h3>
-                <p>Description of your awesome project goes here.</p>
-                <!-- زرار هيفتح الفيديو في مودال (Modal) -->
-                <button onclick="openVideo('video1.mp4')">Watch Video</button>
+                <p>Description of your awesome Full Stack project.</p>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button id="projectBtn_one" onclick="likeProject('one')">❤️ 20 Likes</button>
+                    <button onclick="openVideo('video1.mp4')">Watch Video</button>
+                </div>
             </div>
-            <!-- ممكن تضيف بروجيكت تاني هنا بنفس الطريقة -->
         </div>
     </section>
 
@@ -69,7 +69,7 @@
             <button type="submit">Post Comment</button>
         </form>
         <div id="commentsList">
-            <!-- Comments will load here -->
+            <!-- Comments load dynamically here -->
         </div>
     </section>
 
@@ -93,22 +93,7 @@
         </div>
     </div>
 
-    <script>
-        function openVideo(videoSrc) {
-            const modal = document.getElementById('videoModal');
-            const video = document.getElementById('modalVideo');
-            video.src = videoSrc;
-            modal.classList.add('active');
-            video.play();
-        }
-
-        function closeVideo() {
-            const modal = document.getElementById('videoModal');
-            const video = document.getElementById('modalVideo');
-            video.pause();
-            video.src = '';
-            modal.classList.remove('active');
-        }
-    </script>
+    <!-- MAIN JAVASCRIPT FILE -->
+    <script type="module" src="main.js?v=6.0"></script>
 </body>
 </html>
