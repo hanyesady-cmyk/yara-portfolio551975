@@ -4,29 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yara Hani | Full Stack Developer</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=6.0">
 </head>
 <body>
 
     <!-- NAVBAR -->
     <nav>
-        <div class="logo">Yara Hub<span>.</span></div>
-        <ul id="navLinks">
+        <div class="logo">Yara<span>Hub.</span></div>
+        <ul>
             <li><a href="#home" class="active">Home</a></li>
             <li><a href="#skills">Skills</a></li>
             <li><a href="#projects">Projects</a></li>
             <li><a href="#comments">Comments</a></li>
             <li><a href="#contact">Contact</a></li>
         </ul>
-        <button id="menuBtn">☰</button>
         <a href="#contact" class="hire-btn">Hire Me</a>
     </nav>
 
     <!-- HOME SECTION -->
     <section id="home">
-        <div class="hero-content">
+        <div class="home-content">
             <h1>Hi, I'm Yara Hani</h1>
             <p>Full Stack Developer</p>
+        </div>
+        <div class="home-image">
+            <!-- حط اسم صورتك الشخصية هنا -->
+            <img src="my-image.jpg" alt="Yara Hani">
         </div>
     </section>
 
@@ -49,9 +52,11 @@
         <div class="projects-grid">
             <div class="project-card">
                 <h3>Project One</h3>
-                <button class="project-like" data-id="project1">❤️ <span class="project-likes">0</span> Likes</button>
-                <button onclick="openVideo('https://www.w3schools.com/html/mov_bbb.mp4')">Watch Video</button>
+                <p>Description of your awesome project goes here.</p>
+                <!-- زرار هيفتح الفيديو في مودال (Modal) -->
+                <button onclick="openVideo('video1.mp4')">Watch Video</button>
             </div>
+            <!-- ممكن تضيف بروجيكت تاني هنا بنفس الطريقة -->
         </div>
     </section>
 
@@ -59,11 +64,11 @@
     <section id="comments">
         <h2>Comments</h2>
         <form id="commentForm">
-            <input type="text" id="commentName" placeholder="Your Name" required>
-            <textarea id="commentMessage" placeholder="Write a comment..." required></textarea>
+            <input type="text" id="userName" placeholder="Your Name" required>
+            <textarea id="commentText" placeholder="Write a comment..." required></textarea>
             <button type="submit">Post Comment</button>
         </form>
-        <div id="commentsContainer">
+        <div id="commentsList">
             <!-- Comments will load here -->
         </div>
     </section>
@@ -72,17 +77,38 @@
     <section id="contact">
         <h2>Contact</h2>
         <p>Get in touch with me!</p>
+        <div class="social-links" style="margin-top: 20px;">
+            <a href="https://www.linkedin.com/in/yara-hany-1451693ab" target="_blank" style="color: var(--bs-cyan); text-decoration: none; font-size: 18px; font-weight: bold;">LinkedIn Profile</a>
+        </div>
     </section>
 
     <!-- VIDEO MODAL -->
     <div id="videoModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeVideo()">&times;</span>
-            <video id="videoPlayer" controls></video>
+            <video id="modalVideo" controls>
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
         </div>
     </div>
 
-    <!-- MAIN SCRIPT WITH VERSION QUERY TO BYPASS CACHE -->
-    <script type="module" src="./main.js?v=3.0"></script>
+    <script>
+        function openVideo(videoSrc) {
+            const modal = document.getElementById('videoModal');
+            const video = document.getElementById('modalVideo');
+            video.src = videoSrc;
+            modal.classList.add('active');
+            video.play();
+        }
+
+        function closeVideo() {
+            const modal = document.getElementById('videoModal');
+            const video = document.getElementById('modalVideo');
+            video.pause();
+            video.src = '';
+            modal.classList.remove('active');
+        }
+    </script>
 </body>
 </html>
