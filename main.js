@@ -79,21 +79,24 @@ if (commentForm) {
             const authorName = comment.name || comment.userName || "User";
             const firstLetter = authorName.charAt(0).toUpperCase();
             
-            // فحص جميع الاحتمالات الممكنة لمكان حفظ النص في الداتا القديمة أو الجديدة
             const commentText = comment.text || comment.comment || comment.message || comment.content || "";
             
-            // معالجة التاريخ لو كان كينديشن أو نص عادي
             let commentDate = comment.timestamp || "";
             if (typeof commentDate === 'object') {
                 commentDate = "Recent";
             }
 
+            // فحص جميع الاحتمالات الممكنة لحفظ الردود في الداتا القديمة
+            let repliesList = comment.replies || comment.reply || comment.responses || [];
             let repliesHTML = '';
-            if (comment.replies && Array.isArray(comment.replies)) {
-                comment.replies.forEach(reply => {
+            
+            if (Array.isArray(repliesList) && repliesList.length > 0) {
+                repliesList.forEach(reply => {
+                    const replyName = reply.name || reply.userName || "User";
+                    const replyText = reply.text || reply.comment || reply.message || "";
                     repliesHTML += `
                         <div class="reply-item">
-                            <strong>${reply.name}:</strong> ${reply.text}
+                            <strong>${replyName}:</strong> ${replyText}
                         </div>
                     `;
                 });
@@ -115,7 +118,7 @@ if (commentForm) {
                     <button onclick="toggleReplyForm('${commentId}')">💬 Reply</button>
                     <button onclick="deleteComment('${commentId}')" style="color: #ff4d4d;">🗑️ Delete</button>
                 </div>
-                <div id="repliesContainer_${commentId}" class="replies-container" style="${comment.replies && comment.replies.length > 0 ? '' : 'display:none;'}">
+                <div id="repliesContainer_${commentId}" class="replies-container" style="${repliesHTML ? '' : 'display:none;'}">
                     ${repliesHTML}
                 </div>
                 <div id="replyForm_${commentId}" class="reply-form" style="display:none;">
@@ -135,8 +138,12 @@ window.likeComment = async function(commentId) {
         return;
     }
     const commentRef = doc(db, "comments", commentId);
-    await updateDoc(commentRef, { likes: increment(1) });
-    localStorage.setItem(likedKey, 'true');
+    const docSnap = await getDoc(commentRef);
+    if(docSnap.exists()) {
+        const currentLikes = docSnap.data().likes || 0;
+        await updateDoc(commentRef, { likes: currentLikes + 1 });
+        localStorage.setItem(likedKey, 'true');
+    }
 };
 
 window.toggleReplyForm = function(commentId) {
@@ -161,7 +168,7 @@ window.submitReply = async function(commentId) {
     const docSnap = await getDoc(commentRef);
     if (docSnap.exists()) {
         const commentData = docSnap.data();
-        const replies = commentData.replies || [];
+        const replies = commentData.replies || commentData.reply || [];
         replies.push({
             name: userName,
             text: replyText,
