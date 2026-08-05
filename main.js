@@ -1,28 +1,35 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, increment, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, update, increment, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+// إعدادات فايربيس الصحيحة الخاصة بكِ
 const firebaseConfig = {
-    databaseURL: "https://yara-portfolio-default-rtdb.firebaseio.com/"
+    apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
+    authDomain: "ga-for-windows-99879.firebaseapp.com",
+    projectId: "ga-for-windows-99879",
+    storageBucket: "ga-for-windows-99879.firebasestorage.app",
+    messagingSenderId: "590172219222",
+    appId: "1:590172219222:web:0202ac673e26a56c1a58f7",
+    databaseURL: "https://ga-for-windows-99879-default-rtdb.firebaseio.com/"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// تثبيت اسم المستخدم (Username) وعدم إمكانية تغييره
+// تثبيت اسم المستخدم (Username) وعدم إمكانية تغييره نهائياً بعد أول إدخال
 window.addEventListener('DOMContentLoaded', () => {
     const userNameInput = document.getElementById('userName');
     const savedUser = localStorage.getItem('portfolio_username');
     
     if (userNameInput && savedUser) {
         userNameInput.value = savedUser;
-        userNameInput.disabled = true;
+        userNameInput.disabled = true; // قفل الحقل
     }
 
-    // جلب لايكات المشاريع مباشرة من الـ Firebase Realtime Database
+    // جلب لايكات المشاريع من قاعدة البيانات
     ['1', '2', '3'].forEach(id => {
         const projectLikeRef = ref(db, `projects/project_${id}/likes`);
         onValue(projectLikeRef, (snapshot) => {
-            const likesCount = snapshot.val() || 20; // الافتراضي 20 لايك حسب بياناتك
+            const likesCount = snapshot.val() || 20;
             const btn = document.getElementById('projectBtn_' + id);
             if (btn) {
                 btn.innerText = `❤️ ${likesCount} Likes`;
@@ -31,7 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// التعامل مع إضافة التعليقات الرئيسية وحفظ الاسم
+// التعامل مع زرار Post Comment وإرسال التعليق للـ Firebase
 const commentForm = document.getElementById('commentForm');
 if (commentForm) {
     commentForm.addEventListener('submit', (e) => {
@@ -63,7 +70,7 @@ if (commentForm) {
         });
     });
 
-    // جلب وعرض كل التعليقات والردود الموجودة في الداتا بيز بشكل لحظي
+    // جلب وعرض كل التعليقات والردود القديمة والجديدة فورياً من الـ Database
     const commentsRef = ref(db, 'comments');
     onValue(commentsRef, (snapshot) => {
         const commentsList = document.getElementById('commentsList');
@@ -120,7 +127,7 @@ if (commentForm) {
     });
 }
 
-// لايك للتعليق (مع منع التكرار)
+// لايك للتعليق (مع منع تكرار اللايك من نفس المتصفح)
 window.likeComment = function(commentId) {
     const likedKey = 'liked_comment_' + commentId;
     if (localStorage.getItem(likedKey)) {
@@ -176,7 +183,7 @@ window.deleteComment = function(commentId) {
     }
 };
 
-// لايكات المشاريع ومتصلة بقاعدة البيانات (مع منع التكرار)
+// لايكات المشاريع (مع منع تكرار اللايك وتخزينها في قاعدة البيانات)
 window.likeProject = function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
@@ -192,7 +199,7 @@ window.likeProject = function(projectId) {
     });
 };
 
-// دوال تشغيل وإغلاق الفيديوهات
+// دوال فتح وإغلاق الفيديوهات (Modal)
 window.openVideo = function(videoSrc) {
     const modal = document.getElementById('videoModal');
     const video = document.getElementById('modalVideo');
