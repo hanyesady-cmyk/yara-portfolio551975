@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, increment, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, update, increment, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
     databaseURL: "https://yara-portfolio-default-rtdb.firebaseio.com/"
@@ -15,16 +15,19 @@ window.addEventListener('DOMContentLoaded', () => {
     
     if (userNameInput && savedUser) {
         userNameInput.value = savedUser;
-        userNameInput.disabled = true; // قفل الحقل نهائياً
+        userNameInput.disabled = true;
     }
 
-    // استرجاع وعرض لايكات المشاريع من LocalStorage
+    // جلب لايكات المشاريع مباشرة من الـ Firebase Realtime Database
     ['1', '2', '3'].forEach(id => {
-        let savedLikes = localStorage.getItem('project_' + id) || 4;
-        const btn = document.getElementById('projectBtn_' + id);
-        if (btn) {
-            btn.innerText = `❤️ ${savedLikes} Likes`;
-        }
+        const projectLikeRef = ref(db, `projects/project_${id}/likes`);
+        onValue(projectLikeRef, (snapshot) => {
+            const likesCount = snapshot.val() || 20; // الافتراضي 20 لايك حسب بياناتك
+            const btn = document.getElementById('projectBtn_' + id);
+            if (btn) {
+                btn.innerText = `❤️ ${likesCount} Likes`;
+            }
+        });
     });
 });
 
@@ -44,7 +47,8 @@ if (commentForm) {
             }
         }
 
-        const commentText = document.getElementById('commentText').value;
+        const commentText = document.getElementById('commentText').value.trim();
+        if (!commentText || !userName) return;
         
         const commentsRef = ref(db, 'comments');
         push(commentsRef, {
@@ -54,10 +58,12 @@ if (commentForm) {
             likes: 0
         }).then(() => {
             document.getElementById('commentText').value = '';
+        }).catch((error) => {
+            console.error("Error adding comment: ", error);
         });
     });
 
-    // جلب وعرض التعليقات والردود وتحديثها فورياً
+    // جلب وعرض كل التعليقات والردود الموجودة في الداتا بيز بشكل لحظي
     const commentsRef = ref(db, 'comments');
     onValue(commentsRef, (snapshot) => {
         const commentsList = document.getElementById('commentsList');
@@ -68,9 +74,8 @@ if (commentForm) {
         if (data) {
             Object.keys(data).forEach((key) => {
                 const comment = data[key];
-                const firstLetter = comment.name ? comment.name.charAt(0).toUpperCase() : 'A';
+                const firstLetter = comment.name ? comment.name.charAt(0).toUpperCase() : 'Y';
                 
-                // بناء هيكل الردود (Replies) إن وجدت
                 let repliesHTML = '';
                 if (comment.replies) {
                     Object.keys(comment.replies).forEach(replyKey => {
@@ -115,7 +120,7 @@ if (commentForm) {
     });
 }
 
-// دالة لايك للتعليق (منع تكرار اللايك من نفس المتصفح)
+// لايك للتعليق (مع منع التكرار)
 window.likeComment = function(commentId) {
     const likedKey = 'liked_comment_' + commentId;
     if (localStorage.getItem(likedKey)) {
@@ -139,7 +144,7 @@ window.toggleReplyForm = function(commentId) {
     }
 };
 
-// إضافة ريبلاي على كومنت (مع التحقق من تثبيت اليوزر)
+// إضافة رد (Reply)
 window.submitReply = function(commentId) {
     const replyInput = document.getElementById('replyInput_' + commentId);
     const replyText = replyInput.value.trim();
@@ -163,7 +168,7 @@ window.submitReply = function(commentId) {
     });
 };
 
-// دالة حذف التعليق
+// حذف التعليق
 window.deleteComment = function(commentId) {
     if (confirm("هل أنت متأكد من حذف هذا التعليق؟")) {
         const commentRef = ref(db, 'comments/' + commentId);
@@ -171,7 +176,7 @@ window.deleteComment = function(commentId) {
     }
 };
 
-// لايكات البروجيكتس (مع منع التكرار)
+// لايكات المشاريع ومتصلة بقاعدة البيانات (مع منع التكرار)
 window.likeProject = function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
@@ -179,17 +184,15 @@ window.likeProject = function(projectId) {
         return;
     }
 
-    let likes = parseInt(localStorage.getItem('project_' + projectId) || 4) + 1;
-    localStorage.setItem('project_' + projectId, likes);
-    localStorage.setItem(likedKey, 'true');
-    
-    const btn = document.getElementById('projectBtn_' + projectId);
-    if (btn) {
-        btn.innerText = `❤️ ${likes} Likes`;
-    }
+    const projectRef = ref(db, `projects/project_${projectId}`);
+    update(projectRef, {
+        likes: increment(1)
+    }).then(() => {
+        localStorage.setItem(likedKey, 'true');
+    });
 };
 
-// دوال فتح وغلق نافذة الفيديو (Modal)
+// دوال تشغيل وإغلاق الفيديوهات
 window.openVideo = function(videoSrc) {
     const modal = document.getElementById('videoModal');
     const video = document.getElementById('modalVideo');
