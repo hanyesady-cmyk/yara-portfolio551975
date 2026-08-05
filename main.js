@@ -76,8 +76,18 @@ if (commentForm) {
         snapshot.forEach((docSnap) => {
             const comment = docSnap.data();
             const commentId = docSnap.id;
-            const firstLetter = comment.name ? comment.name.charAt(0).toUpperCase() : 'Y';
+            const authorName = comment.name || comment.userName || "User";
+            const firstLetter = authorName.charAt(0).toUpperCase();
             
+            // فحص جميع الاحتمالات الممكنة لمكان حفظ النص في الداتا القديمة أو الجديدة
+            const commentText = comment.text || comment.comment || comment.message || comment.content || "";
+            
+            // معالجة التاريخ لو كان كينديشن أو نص عادي
+            let commentDate = comment.timestamp || "";
+            if (typeof commentDate === 'object') {
+                commentDate = "Recent";
+            }
+
             let repliesHTML = '';
             if (comment.replies && Array.isArray(comment.replies)) {
                 comment.replies.forEach(reply => {
@@ -95,11 +105,11 @@ if (commentForm) {
                 <div class="comment-header">
                     <div class="avatar">${firstLetter}</div>
                     <div>
-                        <strong>${comment.name}</strong>
-                        <div class="comment-date">${comment.timestamp}</div>
+                        <strong>${authorName}</strong>
+                        <div class="comment-date">${commentDate}</div>
                     </div>
                 </div>
-                <div class="comment-text">${comment.text}</div>
+                <div class="comment-text">${commentText}</div>
                 <div class="comment-actions">
                     <button onclick="likeComment('${commentId}')">❤️ ${comment.likes || 0} Likes</button>
                     <button onclick="toggleReplyForm('${commentId}')">💬 Reply</button>
