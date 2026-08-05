@@ -13,12 +13,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// دالة حديثة لتحديث مكتبة الأنيميشن وتجنب ثبات أو اختفاء المحتوى
+function refreshAOS() {
+    if (typeof AOS !== 'undefined') {
+        setTimeout(() => {
+            AOS.refresh();
+        }, 150);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-    // تفعيل مكتبة الأنيميشن للسكرول
+    // تفعيل مكتبة الأنيميشن للسكرول بإعدادات مودرن وانسيابية
     if (typeof AOS !== 'undefined') {
         AOS.init({
-            duration: 1000,
-            once: true
+            duration: 1000,      // سرعة الانيميشن
+            once: true,          // تفعيل الحركة مرة واحدة عند السكرول للمرة الأولى
+            offset: 80,          // مسافة البداية قبل ظهور العنصر بقليل
+            easing: 'ease-out-cubic' // حركة ناعمة ومودرن
         });
     }
 
@@ -120,6 +131,9 @@ if (commentForm) {
 
             const commentElement = document.createElement('div');
             commentElement.className = 'comment-card';
+            // إضافة خاصية الـ AOS هنا ديناميكياً لتظهر بشكل مودرن عند السكرول
+            commentElement.setAttribute('data-aos', 'fade-up');
+            
             commentElement.innerHTML = `
                 <div class="comment-header">
                     <div class="avatar">${firstLetter}</div>
@@ -144,6 +158,9 @@ if (commentForm) {
             `;
             commentsList.appendChild(commentElement);
         });
+
+        // تحديث الانيميشن ليعمل بشكل سليم مع العناصر المضافة حديثاً
+        refreshAOS();
     });
 }
 
@@ -166,6 +183,7 @@ window.toggleReplyForm = function(commentId) {
     const form = document.getElementById('replyForm_' + commentId);
     if (form) {
         form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        refreshAOS();
     }
 };
 
@@ -193,6 +211,7 @@ window.submitReply = async function(commentId) {
         await updateDoc(commentRef, { replies: replies });
         replyInput.value = '';
         document.getElementById('replyForm_' + commentId).style.display = 'none';
+        refreshAOS();
     }
 };
 
