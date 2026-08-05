@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, update, increment, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// إعدادات فايربيس الصحيحة الخاصة بكِ
+// إعدادات فايربيس الصحيحة برابط الـ Database السليم (بدون مسافات)
 const firebaseConfig = {
     apiKey: "AIzaSyBzw31yi2dStayYCjJiCS8sTtIsQ3OHlY8",
     authDomain: "ga-for-windows-99879.firebaseapp.com",
@@ -9,20 +9,20 @@ const firebaseConfig = {
     storageBucket: "ga-for-windows-99879.firebasestorage.app",
     messagingSenderId: "590172219222",
     appId: "1:590172219222:web:0202ac673e26a56c1a58f7",
-    databaseURL: "https://ga-for-windows-99879-default-rtdb.firebaseio.com/"
+    databaseURL: "https://ga-for-windows-99879-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// تثبيت اسم المستخدم (Username) وعدم إمكانية تغييره نهائياً بعد أول إدخال
+// تثبيت اسم المستخدم (Username) وعدم إمكانية تغييره بعد أول إدخال
 window.addEventListener('DOMContentLoaded', () => {
     const userNameInput = document.getElementById('userName');
     const savedUser = localStorage.getItem('portfolio_username');
     
     if (userNameInput && savedUser) {
         userNameInput.value = savedUser;
-        userNameInput.disabled = true; // قفل الحقل
+        userNameInput.disabled = true;
     }
 
     // جلب لايكات المشاريع من قاعدة البيانات
@@ -70,7 +70,7 @@ if (commentForm) {
         });
     });
 
-    // جلب وعرض كل التعليقات والردود القديمة والجديدة فورياً من الـ Database
+    // جلب وعرض كل التعليقات والردود فورياً من الـ Database
     const commentsRef = ref(db, 'comments');
     onValue(commentsRef, (snapshot) => {
         const commentsList = document.getElementById('commentsList');
@@ -183,7 +183,7 @@ window.deleteComment = function(commentId) {
     }
 };
 
-// لايكات المشاريع (مع منع تكرار اللايك وتخزينها في قاعدة البيانات)
+// لايكات المشاريع
 window.likeProject = function(projectId) {
     const likedKey = 'liked_project_' + projectId;
     if (localStorage.getItem(likedKey)) {
