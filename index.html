@@ -28,7 +28,7 @@
             <p>Full Stack Developer</p>
         </div>
         <div class="home-image">
-            <img src="my-image.jpg" alt="Yara Hani">
+            <img src="bbd3896a-7c65-4027-9643-ba959adce95d.png" alt="Yara Hani">
         </div>
     </section>
 
@@ -49,12 +49,33 @@
     <section id="projects">
         <h2>Projects</h2>
         <div class="projects-grid">
+            <!-- مشروع Elegance -->
             <div class="project-card">
-                <h3>Project One</h3>
-                <p>Description of your awesome Full Stack project.</p>
+                <h3>Elegance Project</h3>
+                <p>Full Stack web application featuring modern UI and interactive components.</p>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button id="projectBtn_one" onclick="likeProject('one')">❤️ 20 Likes</button>
-                    <button onclick="openVideo('video1.mp4')">Watch Video</button>
+                    <button id="projectBtn_1" onclick="likeProject('1')">❤️ 20 Likes</button>
+                    <button onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705568/elegance_y1pwe0.mp4')">Watch Video</button>
+                </div>
+            </div>
+
+            <!-- مشروع Product Showcase -->
+            <div class="project-card">
+                <h3>Product Showcase</h3>
+                <p>Interactive product showcase platform with clean layout and responsive grid.</p>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button id="projectBtn_2" onclick="likeProject('2')">❤️ 20 Likes</button>
+                    <button onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705342/Product_Showcase_-_Google_Chrome_2025-12-03_13-31-07_papzpo.mp4')">Watch Video</button>
+                </div>
+            </div>
+
+            <!-- مشروع Portfolio -->
+            <div class="project-card">
+                <h3>Personal Portfolio</h3>
+                <p>Full Stack portfolio website integrated with Firebase database and video modals.</p>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button id="projectBtn_3" onclick="likeProject('3')">❤️ 20 Likes</button>
+                    <button onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705514/WhatsApp_Video_2026-08-01_at_1.17.55_AM_vtkrid.mp4')">Watch Video</button>
                 </div>
             </div>
         </div>
@@ -68,9 +89,7 @@
             <textarea id="commentText" placeholder="Write a comment..." required></textarea>
             <button type="submit">Post Comment</button>
         </form>
-        <div id="commentsList">
-            <!-- Comments load dynamically here -->
-        </div>
+        <div id="commentsList"></div>
     </section>
 
     <!-- CONTACT SECTION -->
@@ -93,7 +112,6 @@
         </div>
     </div>
 
-    <!-- MAIN JAVASCRIPT FILE -->
     <script type="module" src="main.js?v=6.0"></script>
 </body>
 </html>
