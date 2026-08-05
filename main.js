@@ -14,6 +14,14 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 window.addEventListener('DOMContentLoaded', () => {
+    // تفعيل مكتبة الأنيميشن للسكرول
+    if (typeof AOS !== 'undefined') {
+        AOS.init({
+            duration: 1000,
+            once: true
+        });
+    }
+
     const userNameInput = document.getElementById('userName');
     const savedUser = localStorage.getItem('portfolio_username');
     
