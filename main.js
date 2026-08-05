@@ -220,7 +220,7 @@ if (commentsContainer) {
         });
     }, (error) => {
         console.error("Comments snapshot error: ", error);
-        commentsContainer.innerHTML = `<p style="color:#d9534f; text-align:center; padding:20px;">Failed to load comments. Please check your internet connection or QUIC settings.</p>`;
+        commentsContainer.innerHTML = `<p style="color:#d9534f; text-align:center; padding:20px;">Failed to load comments.</p>`;
     });
 }
 
@@ -228,7 +228,10 @@ function createCommentUI(commentDoc) {
     const data = commentDoc.data();
     const id = commentDoc.id;
     const card = document.createElement("div");
-    card.className = "comment-card scroll-reveal show";
+    // تم إزالة مشكلة الـ scroll-reveal هنا عشان الكومنت يظهر ويتحمل بكامل وضوحه فوراً
+    card.className = "comment-card";
+    card.style.opacity = "1";
+    card.style.transform = "none";
 
     const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Just now";
     const isOwner = data.userId === currentUserId;
