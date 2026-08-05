@@ -27,9 +27,11 @@ window.addEventListener('DOMContentLoaded', () => {
         onSnapshot(docRef, (docSnap) => {
             const btn = document.getElementById('projectBtn_' + id);
             if (btn) {
-                let likesCount = 20;
-                if (docSnap.exists() && docSnap.data().likes !== undefined) {
-                    likesCount = docSnap.data().likes;
+                let likesCount = 0;
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // قراءة قيمة اللايكات أياً كانت مسمياتها في الداتا بيز
+                    likesCount = data.likes !== undefined ? data.likes : (data.like !== undefined ? data.like : 0);
                 }
                 btn.innerText = `❤️ ${likesCount} Likes`;
             }
@@ -103,7 +105,6 @@ if (commentForm) {
                 });
             }
 
-            // التحقق مما إذا كان المستخدم الحالي هو صاحب التعليق لإظهار زر الحذف له فقط
             let deleteButtonHTML = '';
             if (currentUser && currentUser.trim().toLowerCase() === authorName.trim().toLowerCase()) {
                 deleteButtonHTML = `<button onclick="deleteComment('${commentId}')" style="color: #ff4d4d;">🗑️ Delete</button>`;
@@ -203,9 +204,10 @@ window.likeProject = async function(projectId) {
     const docSnap = await getDoc(projectRef);
     
     if (!docSnap.exists()) {
-        await setDoc(projectRef, { likes: 21 });
+        await setDoc(projectRef, { likes: 1 });
     } else {
-        const currentLikes = docSnap.data().likes !== undefined ? docSnap.data().likes : 20;
+        const data = docSnap.data();
+        const currentLikes = data.likes !== undefined ? data.likes : (data.like !== undefined ? data.like : 0);
         await updateDoc(projectRef, { likes: currentLikes + 1 });
     }
     localStorage.setItem(likedKey, 'true');
