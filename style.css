@@ -1,4 +1,3 @@
-/* General Styles */
 * {
     margin: 0;
     padding: 0;
@@ -604,4 +603,130 @@ footer span {
 
 .close-btn:hover {
     color: #a78bfa;
+}
+
+/* ========================================================
+   الإضافات الجديدة: أنيميشن اللوجو + التوافق مع الشاشات الصغيرة (Responsive)
+   ======================================================== */
+
+/* 1. أنيميشن نبض أو توهج للوجو (Yara) */
+@keyframes logoPulse {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 0 5px rgba(138, 43, 226, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 15px rgba(138, 43, 226, 0.8), 0 0 25px rgba(124, 58, 237, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 0 5px rgba(138, 43, 226, 0.3);
+    }
+}
+
+.logo {
+    animation: logoPulse 3s ease-in-out infinite;
+}
+
+/* 2. التوافق مع الشاشات الصغيرة والموبايل (Responsive Media Queries) */
+@media (max-width: 992px) {
+    nav {
+        padding: 15px 5%;
+    }
+    
+    /* إخفاء الروابط في الناف بار أو تصغيرها للشاشات المتوسطة والصغيرة */
+    nav ul {
+        gap: 15px;
+    }
+
+    nav ul li a {
+        font-size: 14px;
+    }
+
+    .hire-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    #home {
+        flex-direction: column-reverse;
+        justify-content: center;
+        text-align: center;
+        padding-top: 120px;
+        padding-bottom: 50px;
+        gap: 40px;
+    }
+
+    .home-content {
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .home-content h1 {
+        font-size: 36px;
+    }
+
+    .home-content h2 {
+        font-size: 22px;
+    }
+
+    .home-buttons {
+        justify-content: center;
+    }
+
+    .home-image img {
+        width: 280px;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    /* تصغير الناف بار للشاشات الصغيرة جداً */
+    nav {
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 5%;
+    }
+
+    nav ul {
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .hire-btn {
+        display: none; /* إخفاء زر Hire Me لتوفير مساحة، أو يمكنك إبقاؤه حسب رغبتك */
+    }
+
+    #home {
+        padding-top: 150px;
+    }
+
+    .home-content h1 {
+        font-size: 30px;
+    }
+
+    .home-content h2 {
+        font-size: 18px;
+    }
+
+    #skills, #projects, #comments, #contact {
+        padding: 60px 5%;
+    }
+
+    #skills h2, #projects h2, #comments h2, #contact h2 {
+        font-size: 28px;
+    }
+
+    .contact-cards-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .contact-card {
+        justify-content: flex-start;
+    }
 }
