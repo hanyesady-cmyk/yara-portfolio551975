@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yara Hani | Full Stack Developer</title>
-    <link rel="stylesheet" href="style.css?v=6.0">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- NAVBAR -->
     <nav>
-        <div class="logo">Yara<span>Hub.</span></div>
+        <div class="logo">Yara<span>.</span></div>
         <ul>
             <li><a href="#home" class="active">Home</a></li>
             <li><a href="#skills">Skills</a></li>
@@ -21,87 +20,166 @@
         <a href="#contact" class="hire-btn">Hire Me</a>
     </nav>
 
-    <!-- HOME SECTION -->
     <section id="home">
         <div class="home-content">
             <h1>Hi, I'm Yara Hani</h1>
-            <p>Full Stack Developer</p>
+            <h2>Full Stack Web Developer</h2>
+            <p>I build modern, responsive and interactive web applications using HTML, CSS, JavaScript, React.js, Node.js, Express.js and Firebase. I enjoy creating beautiful interfaces with powerful backend solutions.</p>
+            <div class="tech-stack-pills">
+                <span>HTML</span> • <span>CSS</span> • <span>JavaScript</span> • <span>Bootstrap</span> • <span>React.js</span> • <span>Node.js</span> • <span>Express.js</span> • <span>Firebase</span> • <span>Git & GitHub</span>
+            </div>
+            <div class="home-buttons">
+                <a href="#projects" class="btn-primary">View Projects</a>
+                <a href="#contact" class="btn-secondary">Contact Me</a>
+            </div>
         </div>
         <div class="home-image">
             <img src="bbd3896a-7c65-4027-9643-ba959adce95d.png" alt="Yara Hani">
         </div>
     </section>
 
-    <!-- SKILLS SECTION -->
     <section id="skills">
-        <h2>Skills</h2>
-        <div class="skills-container">
-            <span>HTML</span>
-            <span>CSS</span>
-            <span>JavaScript</span>
-            <span>React</span>
-            <span>Node.js</span>
-            <span>Firebase</span>
+        <h2>My Skills</h2>
+        <p class="section-subtitle">I build complete Full Stack applications with modern technologies.</p>
+        <div class="skills-grid">
+            <div class="skill-card">
+                <div class="skill-icon html-bg">5</div>
+                <h3>HTML5</h3>
+                <p>Semantic and SEO friendly structure.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon css-bg">CS</div>
+                <h3>CSS3</h3>
+                <p>Responsive layouts and modern UI.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon js-bg">JS</div>
+                <h3>JavaScript</h3>
+                <p>Interactive web applications.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon bootstrap-bg">B</div>
+                <h3>Bootstrap</h3>
+                <p>Reusable responsive components.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon react-bg">⚛</div>
+                <h3>React.js</h3>
+                <p>Reusable components and SPA apps.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon node-bg">N</div>
+                <h3>Node.js</h3>
+                <p>Server-side JavaScript environment.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon express-bg">E</div>
+                <h3>Express.js</h3>
+                <p>REST APIs and backend services.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon firebase-bg">🔥</div>
+                <h3>Firebase</h3>
+                <p>Realtime database and cloud services.</p>
+            </div>
+            <div class="skill-card">
+                <div class="skill-icon git-bg">git</div>
+                <h3>Git & GitHub</h3>
+                <p>Version control and deployment.</p>
+            </div>
         </div>
     </section>
 
-    <!-- PROJECTS SECTION -->
     <section id="projects">
-        <h2>Projects</h2>
+        <h2>My Projects</h2>
+        <p class="section-subtitle">Some of my recent Full Stack projects. Watch demos and interact with likes.</p>
         <div class="projects-grid">
-            <!-- مشروع Elegance -->
             <div class="project-card">
-                <h3>Elegance Project</h3>
-                <p>Full Stack web application featuring modern UI and interactive components.</p>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button id="projectBtn_1" onclick="likeProject('1')">❤️ 20 Likes</button>
-                    <button onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705568/elegance_y1pwe0.mp4')">Watch Video</button>
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80" alt="Elegance">
+                <div class="project-info">
+                    <h3>Timeless Elegance</h3>
+                    <p>Responsive fashion website built with HTML, CSS and Javascript.</p>
+                    <div class="project-actions">
+                        <button id="projectBtn_1" onclick="likeProject('1')">❤️ 4 Likes</button>
+                        <button class="watch-video-btn" onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705568/elegance_y1pwe0.mp4')">Watch Video</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- مشروع Product Showcase -->
             <div class="project-card">
-                <h3>Product Showcase</h3>
-                <p>Interactive product showcase platform with clean layout and responsive grid.</p>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button id="projectBtn_2" onclick="likeProject('2')">❤️ 20 Likes</button>
-                    <button onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705342/Product_Showcase_-_Google_Chrome_2025-12-03_13-31-07_papzpo.mp4')">Watch Video</button>
+                <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80" alt="Product Showcase">
+                <div class="project-info">
+                    <h3>Product Showcase</h3>
+                    <p>Interactive product landing page with modern responsive design.</p>
+                    <div class="project-actions">
+                        <button id="projectBtn_2" onclick="likeProject('2')">❤️ 4 Likes</button>
+                        <button class="watch-video-btn" onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705342/Product_Showcase_-_Google_Chrome_2025-12-03_13-31-07_papzpo.mp4')">Watch Video</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- مشروع Portfolio -->
             <div class="project-card">
-                <h3>Personal Portfolio</h3>
-                <p>Full Stack portfolio website integrated with Firebase database and video modals.</p>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button id="projectBtn_3" onclick="likeProject('3')">❤️ 20 Likes</button>
-                    <button onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705514/WhatsApp_Video_2026-08-01_at_1.17.55_AM_vtkrid.mp4')">Watch Video</button>
+                <img src="https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&w=500&q=80" alt="Portfolio Website">
+                <div class="project-info">
+                    <h3>Portfolio Website</h3>
+                    <p>Full Stack portfolio with projects, skills and Firebase integration.</p>
+                    <div class="project-actions">
+                        <button id="projectBtn_3" onclick="likeProject('3')">❤️ 4 Likes</button>
+                        <button class="watch-video-btn" onclick="openVideo('https://res.cloudinary.com/yerzxiba/video/upload/v1785705514/WhatsApp_Video_2026-08-01_at_1.17.55_AM_vtkrid.mp4')">Watch Video</button>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- COMMENTS SECTION -->
     <section id="comments">
-        <h2>Comments</h2>
+        <h2>Community Comments</h2>
+        <p class="section-subtitle">Share your opinion or leave a feedback!</p>
+        
         <form id="commentForm">
             <input type="text" id="userName" placeholder="Your Name" required>
-            <textarea id="commentText" placeholder="Write a comment..." required></textarea>
+            <textarea id="commentText" placeholder="Write your comment..." required></textarea>
             <button type="submit">Post Comment</button>
         </form>
+
         <div id="commentsList"></div>
     </section>
 
-    <!-- CONTACT SECTION -->
     <section id="contact">
-        <h2>Contact</h2>
-        <p>Get in touch with me!</p>
-        <div class="social-links" style="margin-top: 20px;">
-            <a href="https://www.linkedin.com/in/yara-hany-1451693ab" target="_blank" style="color: var(--bs-cyan); text-decoration: none; font-size: 18px; font-weight: bold;">LinkedIn Profile</a>
+        <h2>Contact Me</h2>
+        <p class="section-subtitle">Let's work together! Feel free to contact me anytime.</p>
+        
+        <div class="contact-cards-container">
+            <div class="contact-card">
+                <div class="contact-icon">✉</div>
+                <div class="contact-details">
+                    <span class="contact-title">Email</span>
+                    <a href="mailto:hanyesady@gmail.com">hanyesady@gmail.com</a>
+                </div>
+            </div>
+
+            <div class="contact-card">
+                <div class="contact-icon">in</div>
+                <div class="contact-details">
+                    <span class="contact-title">LinkedIn</span>
+                    <a href="https://www.linkedin.com/in/yara-hany-1451693ab" target="_blank">LinkedIn Profile</a>
+                </div>
+            </div>
+
+            <div class="contact-card">
+                <div class="contact-icon">📞</div>
+                <div class="contact-details">
+                    <span class="contact-title">Phone</span>
+                    <span>01009198671</span>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- VIDEO MODAL -->
+    <footer>
+        <p>© 2026 All Rights Reserved | Designed & Developed by <span>Yara Hani</span></p>
+    </footer>
+
     <div id="videoModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeVideo()">&times;</span>
@@ -112,6 +190,6 @@
         </div>
     </div>
 
-    <script type="module" src="main.js?v=6.0"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
